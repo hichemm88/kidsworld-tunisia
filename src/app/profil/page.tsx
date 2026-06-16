@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase-client";
 import Navbar from "@/components/layout/Navbar";
 import {
   Heart, Star, History, Baby, Plus, Edit2, Trash2, LogOut,
-  X, Save, ChevronRight, Clock, MapPin
+  X, Save, ChevronRight, Clock, MapPin, Settings, Eye, EyeOff
 } from "lucide-react";
 
 interface Child {
@@ -43,6 +43,7 @@ const TABS = [
   { id: "favoris", label: "Favoris", icon: <Heart size={16} /> },
   { id: "avis", label: "Mes avis", icon: <Star size={16} /> },
   { id: "historique", label: "Historique", icon: <History size={16} /> },
+  { id: "settings", label: "Paramètres", icon: <Settings size={16} /> },
 ];
 
 export default function ProfilPage() {
@@ -61,6 +62,19 @@ export default function ProfilPage() {
   const [form, setForm] = useState({ surnom: "", date_naissance: "", sexe: "garçon" });
   const [saving, setSaving] = useState(false);
 
+  // Profile edit state
+  const [profileForm, setProfileForm] = useState({ full_name: "", phone: "" });
+  const [emailForm, setEmailForm] = useState({ email: "" });
+  const [pwdForm, setPwdForm] = useState({ current: "", newPwd: "", confirm: "" });
+  const [showCurrentPwd, setShowCurrentPwd] = useState(false);
+  const [showNewPwd, setShowNewPwd] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [emailSaving, setEmailSaving] = useState(false);
+  const [pwdSaving, setPwdSaving] = useState(false);
+  const [profileMsg, setProfileMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [emailMsg, setEmailMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [pwdMsg, setPwdMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser();
@@ -75,6 +89,11 @@ export default function ProfilPage() {
       ]);
 
       setProfile(profileRes.data);
+      setProfileForm({
+        full_name: profileRes.data?.full_name || "",
+        phone: profileRes.data?.phone || "",
+      });
+      setEmailForm({ email: user.email || "" });
       setChildren((childrenRes.data || []) as Child[]);
       setFavoris((favorisRes.data || []) as any);
       setReviews(reviewsRes.data || []);
@@ -131,6 +150,70 @@ export default function ProfilPage() {
   const removeFavori = async (id: string) => {
     await supabase.from("favorites").delete().eq("id", id);
     setFavoris((f) => f.filter((fav) => fav.id !== id));
+  };
+
+  const saveProfile = async () => {
+    setProfileSaving(true);
+    setProfileMsg(null);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ full_name: profileForm.full_name, phone: profileForm.phone })
+        .eq("id", user.id);
+      if (error) throw error;
+      setProfile((p: any) => ({ ...p, full_name: profileForm.full_name, phone: profileForm.phone }));
+      setProfileMsg({ type: "success", text: "Profil mis à jour !" });
+    } catch {
+      setProfileMsg({ type: "error", text: "Erreur lors de la mise à jour." });
+    } finally {
+      setProfileSaving(false);
+      setTimeout(() => setProfileMsg(null), 3000);
+    }
+  };
+
+  const saveEmail = async () => {
+    setEmailSaving(true);
+    setEmailMsg(null);
+    try {
+      const { error } = await supabase.auth.updateUser({ email: emailForm.email });
+      if (error) throw error;
+      setEmailMsg({ type: "success", text: "Email mis à jour ! Vérifiez votre boîte mail." });
+    } catch {
+      setEmailMsg({ type: "error", text: "Erreur lors du changement d'email." });
+    } finally {
+      setEmailSaving(false);
+      setTimeout(() => setEmailMsg(null), 4000);
+    }
+  };
+
+  const savePassword = async () => {
+    if (pwdForm.newPwd !== pwdForm.confirm) {
+      setPwdMsg({ type: "error", text: "Les mots de passe ne correspondent pas." });
+      return;
+    }
+    if (pwdForm.newPwd.length < 6) {
+      setPwdMsg({ type: "error", text: "Le mot de passe doit contenir au moins 6 caractères." });
+      return;
+    }
+    setPwdSaving(true);
+    setPwdMsg(null);
+    try {
+      // Re-authenticate first
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: pwdForm.current,
+      });
+      if (signInError) throw new Error("Mot de passe actuel incorrect.");
+      const { error } = await supabase.auth.updateUser({ password: pwdForm.newPwd });
+      if (error) throw error;
+      setPwdForm({ current: "", newPwd: "", confirm: "" });
+      setPwdMsg({ type: "success", text: "Mot de passe modifié avec succès !" });
+    } catch (err: any) {
+      setPwdMsg({ type: "error", text: err.message || "Erreur lors du changement de mot de passe." });
+    } finally {
+      setPwdSaving(false);
+      setTimeout(() => setPwdMsg(null), 4000);
+    }
   };
 
   const signOut = async () => {
@@ -326,6 +409,133 @@ export default function ProfilPage() {
                   </div>
                 ))
               )}
+            </div>
+          )}
+
+          {/* Paramètres */}
+          {tab === "settings" && (
+            <div className="flex flex-col gap-5 mb-8">
+              {/* Infos personnelles */}
+              <div className="bg-white rounded-2xl border border-black/8 p-5">
+                <h3 className="font-bold text-[15px] text-[#0D2461] mb-4">Informations personnelles</h3>
+                <div className="flex flex-col gap-3">
+                  <div>
+                    <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Nom complet</label>
+                    <input
+                      type="text"
+                      value={profileForm.full_name}
+                      onChange={(e) => setProfileForm((f) => ({ ...f, full_name: e.target.value }))}
+                      placeholder="Votre nom"
+                      className="w-full border border-black/12 rounded-xl px-3 py-2.5 text-[14px] outline-none focus:border-[#0D2461]/50 transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Téléphone</label>
+                    <input
+                      type="tel"
+                      value={profileForm.phone}
+                      onChange={(e) => setProfileForm((f) => ({ ...f, phone: e.target.value }))}
+                      placeholder="+216 XX XXX XXX"
+                      className="w-full border border-black/12 rounded-xl px-3 py-2.5 text-[14px] outline-none focus:border-[#0D2461]/50 transition-colors"
+                    />
+                  </div>
+                </div>
+                {profileMsg && (
+                  <div className={`mt-3 px-3 py-2 rounded-xl text-[12px] font-semibold ${profileMsg.type === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
+                    {profileMsg.text}
+                  </div>
+                )}
+                <button onClick={saveProfile} disabled={profileSaving}
+                  className="mt-4 w-full flex items-center justify-center gap-2 bg-[#0D2461] text-white text-[13px] font-bold py-2.5 rounded-xl hover:bg-[#1a3a8a] disabled:opacity-50 transition-all">
+                  <Save size={14} /> {profileSaving ? "Enregistrement..." : "Sauvegarder"}
+                </button>
+              </div>
+
+              {/* Changer email */}
+              <div className="bg-white rounded-2xl border border-black/8 p-5">
+                <h3 className="font-bold text-[15px] text-[#0D2461] mb-4">Changer l&apos;email</h3>
+                <div>
+                  <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Nouvel email</label>
+                  <input
+                    type="email"
+                    value={emailForm.email}
+                    onChange={(e) => setEmailForm({ email: e.target.value })}
+                    placeholder="nouveau@email.com"
+                    className="w-full border border-black/12 rounded-xl px-3 py-2.5 text-[14px] outline-none focus:border-[#0D2461]/50 transition-colors"
+                  />
+                </div>
+                {emailMsg && (
+                  <div className={`mt-3 px-3 py-2 rounded-xl text-[12px] font-semibold ${emailMsg.type === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
+                    {emailMsg.text}
+                  </div>
+                )}
+                <button onClick={saveEmail} disabled={emailSaving || !emailForm.email.includes("@")}
+                  className="mt-4 w-full flex items-center justify-center gap-2 bg-[#0D2461] text-white text-[13px] font-bold py-2.5 rounded-xl hover:bg-[#1a3a8a] disabled:opacity-50 transition-all">
+                  <Save size={14} /> {emailSaving ? "Envoi..." : "Changer l'email"}
+                </button>
+              </div>
+
+              {/* Changer mot de passe */}
+              <div className="bg-white rounded-2xl border border-black/8 p-5">
+                <h3 className="font-bold text-[15px] text-[#0D2461] mb-4">Changer le mot de passe</h3>
+                <div className="flex flex-col gap-3">
+                  <div>
+                    <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Mot de passe actuel</label>
+                    <div className="relative">
+                      <input
+                        type={showCurrentPwd ? "text" : "password"}
+                        value={pwdForm.current}
+                        onChange={(e) => setPwdForm((f) => ({ ...f, current: e.target.value }))}
+                        placeholder="••••••••"
+                        className="w-full pr-10 border border-black/12 rounded-xl px-3 py-2.5 text-[14px] outline-none focus:border-[#0D2461]/50 transition-colors"
+                      />
+                      <button type="button" onClick={() => setShowCurrentPwd(!showCurrentPwd)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                        {showCurrentPwd ? <EyeOff size={15} /> : <Eye size={15} />}
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Nouveau mot de passe</label>
+                    <div className="relative">
+                      <input
+                        type={showNewPwd ? "text" : "password"}
+                        value={pwdForm.newPwd}
+                        onChange={(e) => setPwdForm((f) => ({ ...f, newPwd: e.target.value }))}
+                        placeholder="Min. 6 caractères"
+                        className="w-full pr-10 border border-black/12 rounded-xl px-3 py-2.5 text-[14px] outline-none focus:border-[#0D2461]/50 transition-colors"
+                      />
+                      <button type="button" onClick={() => setShowNewPwd(!showNewPwd)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                        {showNewPwd ? <EyeOff size={15} /> : <Eye size={15} />}
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Confirmer le mot de passe</label>
+                    <input
+                      type="password"
+                      value={pwdForm.confirm}
+                      onChange={(e) => setPwdForm((f) => ({ ...f, confirm: e.target.value }))}
+                      placeholder="Répéter le nouveau mot de passe"
+                      className={`w-full border rounded-xl px-3 py-2.5 text-[14px] outline-none transition-colors ${
+                        pwdForm.confirm && pwdForm.newPwd !== pwdForm.confirm
+                          ? "border-red-300 focus:border-red-400"
+                          : "border-black/12 focus:border-[#0D2461]/50"
+                      }`}
+                    />
+                  </div>
+                </div>
+                {pwdMsg && (
+                  <div className={`mt-3 px-3 py-2 rounded-xl text-[12px] font-semibold ${pwdMsg.type === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
+                    {pwdMsg.text}
+                  </div>
+                )}
+                <button onClick={savePassword} disabled={pwdSaving || !pwdForm.current || !pwdForm.newPwd || !pwdForm.confirm}
+                  className="mt-4 w-full flex items-center justify-center gap-2 bg-[#F26522] text-white text-[13px] font-bold py-2.5 rounded-xl hover:bg-[#FF8C4B] disabled:opacity-50 transition-all">
+                  <Save size={14} /> {pwdSaving ? "Modification..." : "Changer le mot de passe"}
+                </button>
+              </div>
             </div>
           )}
 

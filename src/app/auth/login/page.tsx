@@ -20,12 +20,20 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setError("Email ou mot de passe incorrect.");
       setLoading(false);
     } else {
-      router.push("/dashboard");
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", data.user.id)
+        .single();
+      const role = profile?.role;
+      if (role === "admin") router.push("/admin");
+      else if (role === "pro") router.push("/dashboard");
+      else router.push("/profil");
     }
   };
 

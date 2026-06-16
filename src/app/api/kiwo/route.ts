@@ -6,77 +6,67 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-// Réponses rapides pour questions communes
-const QUICK_RESPONSES: Array<{ keywords: string[]; reply: string; searchQuery?: string }> = [
-  {
-    keywords: ["fièvre", "fievre", "température", "temperature", "chaud"],
-    reply: "🌡️ Pour une fièvre chez l'enfant :\n\n**Moins de 38.5°C** : hydratation, déshabiller légèrement, surveiller.\n**Entre 38.5° et 39.5°C** : paracétamol selon le poids (15mg/kg), toutes les 6h.\n**Au-dessus de 40°C ou convulsions** : **consultez un pédiatre immédiatement** !\n\nJe peux te trouver un pédiatre près de chez toi :",
-    searchQuery: "pédiatre",
-  },
-  {
-    keywords: ["otite", "oreille", "mal oreille"],
-    reply: "👂 L'otite est fréquente chez les enfants (surtout 6 mois - 3 ans).\n\n**Signes** : pleurs, fièvre, tire l'oreille, troubles du sommeil.\n**À faire** : consultez rapidement un pédiatre ORL — les antibiotiques sont souvent nécessaires.\n\nVoici des pédiatres disponibles :",
-    searchQuery: "pédiatre",
-  },
-  {
-    keywords: ["vaccin", "vaccination", "vaccinations", "calendrier vaccinal"],
-    reply: "💉 **Calendrier vaccinal Tunisie (résumé)** :\n\n• **Naissance** : BCG, Hépatite B\n• **2 mois** : Penta, Pneumo, Polio\n• **4 mois** : Penta, Pneumo, Polio\n• **6 mois** : Penta, Polio\n• **12 mois** : ROR, Pneumo, Méningocoque\n• **18 mois** : Rappels Penta, Polio\n\nPour le suivi vaccinal, consultez votre pédiatre :",
-    searchQuery: "pédiatre",
-  },
-  {
-    keywords: ["anniversaire", "fête", "fete", "birthday", "gâteau"],
-    reply: "🎂 Super ! Pour un anniversaire réussi en Tunisie, voici mes meilleures recommandations :",
-    searchQuery: "anniversaire",
-  },
-  {
-    keywords: ["natation", "piscine", "nager", "swimming"],
-    reply: "🏊 La natation est excellente pour les enfants dès 4 ans ! Voici les clubs et piscines disponibles :",
-    searchQuery: "natation",
-  },
-  {
-    keywords: ["anglais", "langue", "english", "cours anglais", "linguistique"],
-    reply: "📚 Très bon choix ! L'apprentissage de l'anglais dès le jeune âge est un vrai atout. Voici les meilleures écoles de langue :",
-    searchQuery: "anglais",
-  },
-  {
-    keywords: ["maternelle", "école maternelle", "ecole", "garderie", "crèche", "creche"],
-    reply: "🏫 Pour choisir une maternelle, regardez : la proximité, le ratio élèves/encadrant, la pédagogie (Montessori, classique...) et les horaires. Voici les établissements disponibles :",
-    searchQuery: "maternelle",
-  },
-  {
-    keywords: ["activité", "activite", "activités", "week-end", "weekend", "loisir", "sortie"],
-    reply: "🎨 Beaucoup de belles activités pour les enfants en Tunisie ! Voici ce que je te recommande :",
-    searchQuery: "activités",
-  },
-  {
-    keywords: ["trampoline", "saut", "jump"],
-    reply: "🤸 Le trampoline c'est génial pour dépenser l'énergie ! Voici les parcs disponibles :",
-    searchQuery: "trampoline",
-  },
-  {
-    keywords: ["robotique", "robot", "programmation", "coding", "scratch"],
-    reply: "🤖 Excellent choix pour préparer les enfants au monde de demain ! Voici les ateliers disponibles :",
-    searchQuery: "robotique",
-  },
-  {
-    keywords: ["danse", "ballet", "hip hop", "hiphop"],
-    reply: "💃 La danse développe la coordination, la créativité et la confiance en soi. Voici les cours disponibles :",
-    searchQuery: "danse",
-  },
-  {
-    keywords: ["karaté", "judo", "sport de combat", "arts martiaux"],
-    reply: "🥋 Les arts martiaux apprennent la discipline et le respect. Voici les clubs disponibles :",
-    searchQuery: "judo karaté",
-  },
-];
+const PLATFORM_KNOWLEDGE = `
+Tu es Kiwo 🐧, l'assistant IA de KidsWorld Tunisia — le premier annuaire digital pour parents en Tunisie.
 
-async function searchListings(query: string, limit = 4) {
+## La plateforme KidsWorld
+KidsWorld référence tous les services et activités pour enfants en Tunisie, organisés en 6 catégories :
+- 🏥 **Santé** (slug: sante) : pédiatres, médecins, cliniques, dentistes, ORL, ophtalmos
+- 🎓 **Éducation** (slug: education) : écoles maternelles, primaires, bilingues, Montessori, cours de langue, soutien scolaire
+- 🎪 **Loisirs** (slug: loisirs) : parcs de jeux, trampolines, karting, piscines, bowling, espaces indoor
+- 🎨 **Ateliers** (slug: ateliers) : dessin, musique, danse, robotique, Scratch, programmation, sports
+- 🎂 **Fêtes** (slug: fetes) : organisateurs d'anniversaires, salles de fêtes, animations, décoration, gâteaux
+- 🛍️ **Shopping** (slug: shopping) : magasins jouets, vêtements enfants, puériculture, librairies jeunesse
+
+## Villes couvertes
+Tunis, La Marsa, Ariana, Ben Arous, Manouba, Sousse, Sfax, Bizerte, Nabeul, Hammamet, Monastir
+
+## Ton rôle
+Tu es un assistant bienveillant et expert qui aide les parents à trouver les meilleurs services pour leurs enfants en Tunisie.
+
+## Règles de conversation
+1. **Pose des questions progressives** : si la demande est vague, pose UNE question ciblée pour mieux comprendre
+2. **Connais les enfants** : utilise le contexte des enfants du parent (âge, prénom, sexe) pour personnaliser les réponses
+3. **Sois précis** : propose toujours des listings concrets et adaptés
+4. **Sois chaleureux** : parle comme un ami expert, pas comme un robot
+5. **Langue** : réponds en français (ou en arabe si le parent écrit en arabe)
+6. **Longueur** : réponses courtes et percutantes, max 3-4 lignes de texte + listings
+
+## Format de réponse
+- Texte court et sympathique avec emojis pertinents
+- Maximum 150 mots de texte pur
+- Ne liste pas les établissements dans le texte — ils seront affichés comme cartes séparées
+- Si tu as besoin de plus d'info : pose UNE seule question précise
+- N'invente jamais de listings — dis seulement que tu vas chercher
+
+## Questions types à poser selon le contexte
+- Âge de l'enfant (si non fourni et pertinent)
+- Ville / quartier préféré
+- Budget approximatif (pour les fêtes/activités premium)
+- Disponibilités (soir/weekend pour ateliers)
+- Niveau (débutant/intermédiaire pour sports/arts)
+`.trim();
+
+async function searchListings(query: string, category?: string, ville?: string, limit = 5) {
   try {
-    const { data } = await supabase
+    let q = supabase
       .from("listings_with_stats")
-      .select("id, nom, slug, category_emoji, ville, note_moyenne, plan")
-      .eq("is_active", true)
-      .or(`nom.ilike.%${query}%,description.ilike.%${query}%`)
+      .select("id, nom, slug, category_emoji, ville, note_moyenne, plan, category_slug")
+      .eq("is_active", true);
+
+    if (category) {
+      q = q.eq("category_slug", category);
+    }
+
+    if (ville) {
+      q = q.ilike("ville", `%${ville}%`);
+    }
+
+    if (query) {
+      q = q.or(`nom.ilike.%${query}%,description.ilike.%${query}%`);
+    }
+
+    const { data } = await q
       .order("plan", { ascending: false })
       .order("note_moyenne", { ascending: false })
       .limit(limit);
@@ -93,38 +83,162 @@ async function searchListings(query: string, limit = 4) {
   }
 }
 
+function extractSearchIntent(message: string, history: Array<{ role: string; content: string }>): {
+  query: string;
+  category?: string;
+  ville?: string;
+} {
+  const lower = message.toLowerCase();
+  const fullContext = history.map(h => h.content).join(" ").toLowerCase() + " " + lower;
+
+  // Category detection
+  let category: string | undefined;
+  if (/pédiatre|médecin|docteur|clinique|santé|vaccin|fièvre|otite|dentiste|orl/.test(fullContext)) category = "sante";
+  else if (/maternelle|école|cours|anglais|langue|soutien|primaire|montessori|garderie|crèche/.test(fullContext)) category = "education";
+  else if (/piscine|trampoline|karting|bowling|indoor|parc|jeux|natation|loisir/.test(fullContext)) category = "loisirs";
+  else if (/danse|musique|dessin|robotique|scratch|karaté|judo|sport|atelier/.test(fullContext)) category = "ateliers";
+  else if (/anniversaire|fête|salle|animation|gâteau|décoration/.test(fullContext)) category = "fetes";
+  else if (/jouet|vêtement|shopping|magasin|librairie|puériculture/.test(fullContext)) category = "shopping";
+
+  // City detection
+  let ville: string | undefined;
+  const cities = ["tunis", "la marsa", "ariana", "sousse", "sfax", "nabeul", "hammamet", "bizerte", "monastir", "manouba"];
+  for (const city of cities) {
+    if (fullContext.includes(city)) { ville = city; break; }
+  }
+
+  // Build search query
+  const stopWords = ["je", "cherche", "veux", "pour", "mon", "ma", "mes", "un", "une", "des", "les", "en", "à", "le", "la"];
+  const words = lower.split(/\s+/).filter(w => w.length > 2 && !stopWords.includes(w));
+  const query = words.slice(0, 4).join(" ");
+
+  return { query, category, ville };
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { message } = await request.json();
+    const { message, history = [], childrenContext = [] } = await request.json();
+
     if (!message?.trim()) {
       return NextResponse.json({ reply: "Dis-moi quelque chose, je t'écoute ! 🐧" });
     }
 
-    const lower = message.toLowerCase();
+    // Build children context string
+    let childrenStr = "";
+    if (childrenContext.length > 0) {
+      childrenStr = "\n\n## Enfants du parent\n" + childrenContext.map((c: any) =>
+        `- ${c.surnom} : ${c.age} (${c.sexe})`
+      ).join("\n");
+    }
 
-    // Check quick responses
-    for (const item of QUICK_RESPONSES) {
-      if (item.keywords.some((kw) => lower.includes(kw))) {
-        const listings = item.searchQuery
-          ? await searchListings(item.searchQuery)
-          : [];
-        return NextResponse.json({ reply: item.reply, listings });
+    const systemPrompt = PLATFORM_KNOWLEDGE + childrenStr;
+
+    // Try Claude API
+    const anthropicKey = process.env.ANTHROPIC_API_KEY;
+
+    let reply = "";
+
+    if (anthropicKey) {
+      // Build messages for Claude
+      const messages = [
+        ...history.slice(-8).map((h: any) => ({
+          role: h.role === "kiwo" ? "assistant" : "user",
+          content: h.content,
+        })),
+        { role: "user", content: message },
+      ];
+
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "x-api-key": anthropicKey,
+          "anthropic-version": "2023-06-01",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 400,
+          system: systemPrompt,
+          messages,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        reply = data.content?.[0]?.text || "";
       }
     }
 
-    // Generic search
-    const listings = await searchListings(message, 5);
-
-    let reply = "";
-    if (listings.length > 0) {
-      reply = `🔍 J'ai trouvé **${listings.length} résultat${listings.length > 1 ? "s" : ""}** pour "${message}" :\n\nClique sur un établissement pour voir les détails !`;
-    } else {
-      reply = `Je n'ai pas trouvé de résultats précis pour "${message}", mais je peux t'aider avec :\n\n• 🏥 **Santé** : pédiatres, dentistes\n• 🎓 **Éducation** : écoles, cours\n• 🎨 **Activités** : sports, arts, loisirs\n• 🎂 **Fêtes** : anniversaires, événements\n\nQue cherches-tu exactement ?`;
+    // Fallback to smart keyword-based if no API key or failed
+    if (!reply) {
+      reply = generateSmartReply(message, childrenContext);
     }
+
+    // Search for relevant listings
+    const { query, category, ville } = extractSearchIntent(message, history);
+    const listings = await searchListings(query || category || "enfant", category, ville, 4);
 
     return NextResponse.json({ reply, listings });
   } catch (err) {
     console.error("Kiwo error:", err);
-    return NextResponse.json({ reply: "Désolé, une erreur s'est produite. Réessaie ! 🙈" });
+    return NextResponse.json({
+      reply: "Désolé, une petite erreur s'est produite. Réessaie ! 🐧",
+      listings: [],
+    });
   }
+}
+
+function generateSmartReply(message: string, children: any[]): string {
+  const lower = message.toLowerCase();
+  const childName = children.length > 0 ? ` pour ${children[0].surnom}` : "";
+  const childAge = children.length > 0 ? ` (${children[0].age})` : "";
+
+  // Health
+  if (/fièvre|temperature|chaud/.test(lower)) {
+    return `🌡️ Pour une fièvre${childName}${childAge}, si elle dépasse 38.5°C, donne du paracétamol (15mg/kg) et surveille de près. Au-dessus de 40°C : consultation urgente ! Voici les pédiatres disponibles :`;
+  }
+  if (/pédiatre|médecin|docteur/.test(lower)) {
+    return `🏥 Je te trouve un pédiatre${childName}. Tu es dans quelle ville ? Voici les disponibles :`;
+  }
+  if (/vaccin|vaccination/.test(lower)) {
+    return `💉 Pour le calendrier vaccinal${childName}${childAge}, voici les pédiatres qui font le suivi vaccinal :`;
+  }
+
+  // Education
+  if (/maternelle|école|garderie|crèche/.test(lower)) {
+    return `🏫 Pour choisir une école${childName}${childAge}, les critères clés sont : ratio élèves/encadrant, pédagogie et proximité. Voici ce qu'on a dans ta zone :`;
+  }
+  if (/anglais|langue|cours/.test(lower)) {
+    return `📚 L'apprentissage précoce des langues est excellent${childName ? ` ${childName}` : ""} ! Dans quelle ville et à quel âge ? Voici les options :`;
+  }
+
+  // Leisure & activities
+  if (/anniversaire|fête|birthday/.test(lower)) {
+    return `🎂 Super projet${childName} ! Quel âge fêter et combien d'enfants environ ? En attendant, voici les meilleurs organisateurs :`;
+  }
+  if (/natation|piscine|nager/.test(lower)) {
+    return `🏊 La natation${childName ? ` pour ${children[0]?.surnom}` : ""} c'est excellent ! Voici les clubs et piscines disponibles :`;
+  }
+  if (/danse|ballet|hip.?hop/.test(lower)) {
+    return `💃 La danse développe la coordination et la confiance en soi${childName} ! Voici les cours disponibles :`;
+  }
+  if (/robotique|robot|scratch|programmation/.test(lower)) {
+    return `🤖 Excellent choix pour préparer l'avenir${childName} ! Voici les ateliers robotique et coding :`;
+  }
+  if (/trampoline|saut|jump/.test(lower)) {
+    return `🤸 Le trampoline${childName ? ` pour ${children[0]?.surnom}` : ""} c'est parfait pour dépenser l'énergie ! Voici les parcs :`;
+  }
+  if (/karaté|judo|sport de combat|arts martiaux/.test(lower)) {
+    return `🥋 Les arts martiaux apprennent la discipline et le respect${childName} ! Voici les clubs :`;
+  }
+  if (/activité|sortie|week.?end|loisir/.test(lower)) {
+    return `🎨 Plein de belles activités${childName} en Tunisie ! Pour affiner, dis-moi l'âge et la ville. En attendant :`;
+  }
+
+  // Generic with child context
+  if (children.length > 0) {
+    return `🐧 Je suis là pour aider avec ${children.map(c => c.surnom).join(" et ")} ! Dis-moi ce que tu cherches (activité, médecin, école...) et je te propose les meilleures options.`;
+  }
+
+  return `🐧 Je suis là pour t'aider ! Dis-moi ce que tu cherches pour ton enfant — activité, médecin, école, fête... Je te propose les meilleures options en Tunisie.`;
 }
