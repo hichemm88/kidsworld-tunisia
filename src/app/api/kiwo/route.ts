@@ -91,14 +91,18 @@ function extractSearchIntent(message: string, history: Array<{ role: string; con
   const lower = message.toLowerCase();
   const fullContext = history.map(h => h.content).join(" ").toLowerCase() + " " + lower;
 
-  // Category detection
+  // Normalize accents for matching
+  const normalize = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  const normContext = normalize(fullContext);
+
+  // Category detection (accent-insensitive)
   let category: string | undefined;
-  if (/pédiatre|médecin|docteur|clinique|santé|vaccin|fièvre|otite|dentiste|orl/.test(fullContext)) category = "sante";
-  else if (/maternelle|école|cours|anglais|langue|soutien|primaire|montessori|garderie|crèche/.test(fullContext)) category = "education";
-  else if (/piscine|trampoline|karting|bowling|indoor|parc|jeux|natation|loisir/.test(fullContext)) category = "loisirs";
-  else if (/danse|musique|dessin|robotique|scratch|karaté|judo|sport|atelier/.test(fullContext)) category = "ateliers";
-  else if (/anniversaire|fête|salle|animation|gâteau|décoration/.test(fullContext)) category = "fetes";
-  else if (/jouet|vêtement|shopping|magasin|librairie|puériculture/.test(fullContext)) category = "shopping";
+  if (/pediatre|medecin|docteur|clinique|sante|vaccin|fievre|otite|dentiste|orl/.test(normContext)) category = "sante";
+  else if (/maternelle|ecole|cours|anglais|langue|soutien|primaire|montessori|garderie|creche/.test(normContext)) category = "education";
+  else if (/piscine|trampoline|karting|bowling|indoor|parc|jeux|natation|loisir/.test(normContext)) category = "loisirs";
+  else if (/danse|musique|dessin|robotique|scratch|karate|judo|sport|atelier/.test(normContext)) category = "ateliers";
+  else if (/anniversaire|fete|salle|animation|gateau|decoration/.test(normContext)) category = "fetes";
+  else if (/jouet|vetement|habit|acheter|shopping|magasin|boutique|librairie|puericulture|fringue|tenue/.test(normContext)) category = "shopping";
 
   // City detection
   let ville: string | undefined;
@@ -108,8 +112,8 @@ function extractSearchIntent(message: string, history: Array<{ role: string; con
   }
 
   // Build search query
-  const stopWords = ["je", "cherche", "veux", "pour", "mon", "ma", "mes", "un", "une", "des", "les", "en", "à", "le", "la"];
-  const words = lower.split(/\s+/).filter(w => w.length > 2 && !stopWords.includes(w));
+  const stopWords = ["je", "veux", "pour", "mon", "ma", "mes", "un", "une", "des", "les", "en", "le", "la", "bonjour", "salut", "cherche", "acheter", "trouver", "avoir"];
+  const words = normalize(lower).split(/\s+/).filter(w => w.length > 2 && !stopWords.includes(w));
   const query = words.slice(0, 4).join(" ");
 
   return { query, category, ville };
@@ -231,8 +235,13 @@ function generateSmartReply(message: string, children: any[]): string {
   if (/karaté|judo|sport de combat|arts martiaux/.test(lower)) {
     return `🥋 Les arts martiaux apprennent la discipline et le respect${childName} ! Voici les clubs :`;
   }
-  if (/activité|sortie|week.?end|loisir/.test(lower)) {
+  if (/activit|sortie|week.?end|loisir/.test(lower)) {
     return `🎨 Plein de belles activités${childName} en Tunisie ! Pour affiner, dis-moi l'âge et la ville. En attendant :`;
+  }
+
+  // Shopping
+  if (/vetement|habit|acheter|shopping|magasin|boutique|jouet|librairie|fringue|tenue|puericulture/.test(lower.normalize("NFD").replace(/[̀-ͯ]/g, ""))) {
+    return `🛍️ Pour trouver des vêtements${childName}${childAge}, voici les meilleures boutiques pour enfants en Tunisie :`;
   }
 
   // Generic with child context
