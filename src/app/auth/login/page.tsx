@@ -20,11 +20,13 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      setError("Email ou mot de passe incorrect.");
-      setLoading(false);
-    } else {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        setError("Email ou mot de passe incorrect.");
+        setLoading(false);
+        return;
+      }
       const { data: profile } = await supabase
         .from("profiles")
         .select("role")
@@ -34,6 +36,9 @@ export default function LoginPage() {
       if (role === "admin") router.push("/admin");
       else if (role === "pro") router.push("/dashboard");
       else router.push("/profil");
+    } catch {
+      setError("Une erreur s'est produite. Réessaie.");
+      setLoading(false);
     }
   };
 
