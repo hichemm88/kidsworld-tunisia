@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --navy: #0D2461;
+  --navy2: #071640;
+  --navy3: #1A3A8F;
+  --orange: #F26522;
+  --orange2: #FF8C4B;
+  --yellow: #F5C518;
+  --yellow2: #FFD84D;
+  --cream: #F7F6F2;
+  --cream2: #EDE9E0;
+  --ink: #111827;
+  --ink2: #374151;
+  --ink3: #6B7280;
+  --border: rgba(0, 0, 0, 0.08);
+  --green: #16a34a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--cream);
+  color: var(--ink);
+  font-family: var(--font-nunito), sans-serif;
+  overflow-x: hidden;
+}
+
+/* Scrollbar masqué pour les listes horizontales */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
