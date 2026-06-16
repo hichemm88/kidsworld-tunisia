@@ -64,7 +64,8 @@ function extractSearchIntent(
     message,
   ].join(" ");
   const category = detectCategory(userContext);
-  const ville = detectCity(userContext);
+  // Current message city takes priority over history
+  const ville = detectCity(norm(message)) || detectCity(userContext);
   const stopWords = new Set([
     "je", "tu", "il", "nous", "vous", "ils", "on",
     "veux", "voudrai", "souhaite", "cherche", "pour", "mon", "ma", "mes",
