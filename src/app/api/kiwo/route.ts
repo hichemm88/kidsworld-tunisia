@@ -151,7 +151,7 @@ function generateSmartReply(
   }
 
   const detected = detectCategory(fullContext);
-  const detectedCity = detectCity(fullContext);
+  const detectedCity = detectCity(norm(message)) || detectCity(fullContext);
   const cityStr = detectedCity ? " a **" + detectedCity + "**" : " en Tunisie";
 
   switch (detected) {
