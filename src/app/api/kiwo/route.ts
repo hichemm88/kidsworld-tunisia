@@ -77,19 +77,44 @@ function extractSearchIntent(
   return { query, category, ville };
 }
 
+// listings_with_stats view has category_nom (not category_slug) - map here
+const SLUG_TO_NOM: Record<string, string> = {
+  sante: "Sante",
+  education: "Education",
+  loisirs: "Loisirs",
+  ateliers: "Ateliers",
+  fetes: "Fetes",
+  shopping: "Shopping",
+};
+
 async function searchListings(query: string, category?: string, ville?: string, limit = 4) {
   try {
     let q = supabase
       .from("listings_with_stats")
-      .select("id, nom, slug, category_emoji, ville, note_moyenne, plan, category_slug")
+      .select("id, nom, slug, category_emoji, ville, note_moyenne, plan")
       .eq("is_active", true);
-    if (category) q = q.eq("category_slug", category);
-    if (ville) q = q.ilike("ville", `%${ville}%`);
-    if (query) q = q.or(`nom.ilike.%${query}%,description.ilike.%${query}%`);
+
+    // Filter by category_nom (view has no category_slug column)
+    if (category) {
+      const catNom = SLUG_TO_NOM[category] || category;
+      q = q.ilike("category_nom", catNom + "%");
+    }
+    if (ville) q = q.ilike("ville", "%" + ville + "%");
+
+    // Text search only when no category detected
+    if (!category && query) {
+      const words = query.split(" ").filter((w: string) => w.length > 3).slice(0, 3);
+      if (words.length > 0) {
+        const orFilter = words.map((w: string) => "nom.ilike.%" + w + "%").join(",");
+        q = q.or(orFilter);
+      }
+    }
+
     const { data } = await q
       .order("plan", { ascending: false })
       .order("note_moyenne", { ascending: false })
       .limit(limit);
+
     return (data || []).map((l: any) => ({
       nom: l.nom,
       slug: l.slug,
@@ -97,7 +122,8 @@ async function searchListings(query: string, category?: string, ville?: string, 
       ville: l.ville || "Tunis",
       note_moyenne: l.note_moyenne || 0,
     }));
-  } catch {
+  } catch (e) {
+    console.error("searchListings error:", e);
     return [];
   }
 }
