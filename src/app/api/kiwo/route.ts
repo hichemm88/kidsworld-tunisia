@@ -80,11 +80,11 @@ function extractSearchIntent(
 
 // listings_with_stats view has category_nom (not category_slug) - map here
 const SLUG_TO_NOM: Record<string, string> = {
-  sante: "Sante",
-  education: "Education",
+  sante: "Santé",
+  education: "Éducation",
   loisirs: "Loisirs",
   ateliers: "Ateliers",
-  fetes: "Fetes",
+  fetes: "Fêtes",
   shopping: "Shopping",
 };
 
