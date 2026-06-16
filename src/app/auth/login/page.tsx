@@ -33,9 +33,11 @@ export default function LoginPage() {
         .eq("id", data.user.id)
         .single();
       const role = profile?.role;
-      if (role === "admin") router.push("/admin");
-      else if (role === "pro") router.push("/dashboard");
-      else router.push("/profil");
+      // refresh() commits the Supabase session cookies before navigation
+      router.refresh();
+      if (role === "admin") window.location.href = "/admin";
+      else if (role === "pro") window.location.href = "/dashboard";
+      else window.location.href = "/profil";
     } catch {
       setError("Une erreur s'est produite. Réessaie.");
       setLoading(false);

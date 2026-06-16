@@ -58,9 +58,13 @@ function extractSearchIntent(
   message: string,
   history: Array<{ role: string; content: string }>
 ): { query: string; category?: string; ville?: string } {
-  const fullContext = [...history.map((h) => h.content), message].join(" ");
-  const category = detectCategory(fullContext);
-  const ville = detectCity(fullContext);
+  // Only use USER messages for detection (Kiwo messages contain "médecins" etc. which pollute detection)
+  const userContext = [
+    ...history.filter((h) => h.role === "user").map((h) => h.content),
+    message,
+  ].join(" ");
+  const category = detectCategory(userContext);
+  const ville = detectCity(userContext);
   const stopWords = new Set([
     "je", "tu", "il", "nous", "vous", "ils", "on",
     "veux", "voudrai", "souhaite", "cherche", "pour", "mon", "ma", "mes",
@@ -103,7 +107,10 @@ function generateSmartReply(
   history: Array<{ role: string; content: string }>,
   children: any[]
 ): string {
-  const fullContext = norm([...history.map((h) => h.content), message].join(" "));
+  const fullContext = norm([
+    ...history.filter((h) => h.role === "user").map((h) => h.content),
+    message,
+  ].join(" "));
   const n = norm(message);
   const child = children[0];
   const cn = child ? " pour **" + child.surnom + "**" : "";
