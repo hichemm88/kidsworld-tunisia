@@ -18,7 +18,7 @@ function norm(s: string): string {
 
 const CATEGORY_KEYWORDS: Record<string, RegExp> = {
   sante: /pediatr|pedaitr|medecin|docteur|doctor|doc\b|clinic|sante|sants|vaccin|vacin|fievre|fievr|temperature|maladie|malade|otite|dentist|dentsr|dent\b|orl|ophtlmo|ophtalmo|infirmi|urgenc|pharmacie|tbib|sick|ill|fever|health|nurse|consultat/,
-  education: /maternell|maternele|garderie|creche|cresh|ecole|scool|school|classe|cours\b|cour\b|lesson|soutien|primair|college|lycee|montesori|montessori|bilingue|bilingu|anglais|english|francais|french|arabe|arabic|math|langu|formation|apprentisag|tuteur|tutor|prof\b/,
+  education: /maternell|maternele|garderie|creche|cresh|ecole|scool|school|classe|lesson|soutien|primair|college|lycee|montesori|montessori|bilingue|bilingu|anglais|english|francais|french|arabe|arabic|math\b|langu|formation|apprentisag|tuteur|tutor|prof\b/,
   loisirs: /activit|sorti|piscine|picine|natation|nataion|swim|trampolin|trampo|karting|bowling|bowlin|parc|jeux\b|jeu\b|play|fun|loisir|indoor|balade|parcours|accrobranche|kart|manege|lazer|laser|escape|cinema|cine\b|aqua|faire\b|week.?end|weekend/,
   ateliers: /danse|ballet|hip.?hop|musique|music|guitar|guitare|piano|violin|chant|dessin|peintur|robotique|robot\b|scratch|coding|code\b|programm|karate|judo|taekwondo|sport\b|foot\b|football|basket|tennis|art\b|atelier|club\b|briques|lego|theatre/,
   fetes: /anniversair|anniverssair|aniversair|birthday|bday|fete\b|fetes\b|party\b|partie\b|salle|animation|animat|gateau|cake\b|decor|decoration|celebr|clown|spectacle|magicien|gonflable|3id|hafla|invitation|ballon|bapteme|communion/,
