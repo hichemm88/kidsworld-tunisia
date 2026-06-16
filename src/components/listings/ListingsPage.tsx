@@ -389,10 +389,10 @@ export default function ListingsPage() {
 
         {/* Carte — visible en desktop (split view) ou en mode carte complet */}
         <div className={`${view === "map" ? "flex-1" : "hidden lg:flex flex-1"} flex-col overflow-hidden relative`}>
-          <div className="flex-1 p-3">
+          <div className="flex-1 p-3" style={{ minHeight: 0 }}>
             <MapView
               pins={mapPins}
-              height="100%"
+              height="calc(100vh - 200px)"
               selectedId={selectedId}
               onPinClick={(pin) => setSelectedId(pin.id as string)}
             />
