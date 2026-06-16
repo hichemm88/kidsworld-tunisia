@@ -148,10 +148,10 @@ export default function ListingDetail({ slug }: Props) {
   }
 
   const rating = Number(listing.note_moyenne || 0);
-  const pin = listing.latitude && listing.longitude ? [{
+  const pin = listing.lat && listing.lng ? [{
     id: listing.id,
-    lat: listing.latitude,
-    lng: listing.longitude,
+    lat: listing.lat,
+    lng: listing.lng,
     name: listing.nom,
     category: listing.category_slug,
     premium: listing.plan === "premium",
@@ -358,10 +358,10 @@ export default function ListingDetail({ slug }: Props) {
             <div className="bg-white rounded-2xl border border-black/8 p-5">
               <h2 className="font-bold text-[14px] text-[#0D2461] mb-3">Contact</h2>
               <div className="flex flex-col gap-2">
-                {listing.telephone && (
-                  <a href={`tel:${listing.telephone}`}
+                {listing.phone && (
+                  <a href={`tel:${listing.phone}`}
                     className="flex items-center gap-2.5 p-3 bg-[#0D2461] text-white rounded-xl hover:bg-[#1a3a8a] transition-all text-[13px] font-bold">
-                    <Phone size={15} /> {listing.telephone}
+                    <Phone size={15} /> {listing.phone}
                   </a>
                 )}
                 {listing.adresse && (
@@ -388,7 +388,7 @@ export default function ListingDetail({ slug }: Props) {
                 <div className="rounded-xl overflow-hidden">
                   <MapView
                     pins={pin}
-                    center={[listing.latitude, listing.longitude]}
+                    center={[listing.lat, listing.lng]}
                     zoom={15}
                     height="200px"
                   />
@@ -412,3 +412,4 @@ export default function ListingDetail({ slug }: Props) {
     </div>
   );
 }
+            

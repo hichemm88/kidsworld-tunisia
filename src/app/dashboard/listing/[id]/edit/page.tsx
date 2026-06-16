@@ -25,7 +25,7 @@ interface ListingForm {
   ville: string;
   quartier: string;
   adresse: string;
-  telephone: string;
+  phone: string;
   email: string;
   website: string;
   is_active: boolean;
@@ -54,7 +54,7 @@ export default function EditListingPage() {
   const [tab, setTab] = useState("infos");
   const [listing, setListing] = useState<ListingForm>({
     nom: "", description: "", category_id: "", ville: "Tunis", quartier: "",
-    adresse: "", telephone: "", email: "", website: "", is_active: true,
+    adresse: "", phone: "", email: "", website: "", is_active: true,
   });
   const [horaires, setHoraires] = useState<HoraireRow[]>(
     DAYS.map((jour) => ({ jour, ouvert: jour !== "Dimanche", heure_ouverture: "09:00", heure_fermeture: "18:00" }))
@@ -81,11 +81,11 @@ export default function EditListingPage() {
         setListing({
           nom: l.nom || "", description: l.description || "", category_id: l.category_id || "",
           ville: l.ville || "Tunis", quartier: l.quartier || "", adresse: l.adresse || "",
-          telephone: l.telephone || "", email: l.email || "", website: l.website || "",
+          phone: l.phone || "", email: l.email || "", website: l.website || "",
           is_active: l.is_active ?? true,
         });
-        setLat(l.latitude?.toString() || "");
-        setLng(l.longitude?.toString() || "");
+        setLat(l.lat?.toString() || "");
+        setLng(l.lng?.toString() || "");
 
         const [hoursRes, pricesRes, mediaRes] = await Promise.all([
           supabase.from("listing_hours").select("*").eq("listing_id", id),
@@ -122,8 +122,8 @@ export default function EditListingPage() {
 
       const payload = {
         ...listing,
-        latitude: lat ? parseFloat(lat) : null,
-        longitude: lng ? parseFloat(lng) : null,
+        lat: lat ? parseFloat(lat) : null,
+        lng: lng ? parseFloat(lng) : null,
         owner_id: user.id,
         slug: listing.nom.toLowerCase()
           .replace(/[àáâãä]/g, "a").replace(/[èéêë]/g, "e").replace(/[ìíîï]/g, "i")
@@ -384,7 +384,7 @@ export default function EditListingPage() {
               <div className="flex flex-col gap-5">
                 <div>
                   <label className="text-[12px] font-bold text-gray-500 mb-1.5 block">Téléphone</label>
-                  <input type="tel" value={listing.telephone} onChange={(e) => setListing((l) => ({ ...l, telephone: e.target.value }))}
+                  <input type="tel" value={listing.phone} onChange={(e) => setListing((l) => ({ ...l, phone: e.target.value }))}
                     placeholder="+216 XX XXX XXX"
                     className="w-full border border-black/12 rounded-xl px-3 py-2.5 text-[14px] outline-none focus:border-[#0D2461]/50" />
                 </div>
