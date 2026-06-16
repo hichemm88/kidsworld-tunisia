@@ -168,11 +168,6 @@ export default function MapView({
 
   return (
     <div className="relative rounded-2xl overflow-hidden border border-black/10 shadow-md">
-      {/* Leaflet CSS */}
-      <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"
-      />
       <div ref={mapRef} style={{ height, width: "100%" }} />
 
       {/* Attribution overlay */}
