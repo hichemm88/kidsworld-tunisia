@@ -34,7 +34,7 @@ const CAT_COLORS: Record<string, string> = {
 
 export default function MapView({
   pins,
-  center = [36.8065, 10.1815], // Tunis par défaut
+  center = [36.8065, 10.1815],
   zoom = 12,
   height = "400px",
   onPinClick,
@@ -47,8 +47,13 @@ export default function MapView({
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
 
-    // Import Leaflet dynamiquement côté client uniquement
-    import("leaflet").then((L) => {
+    // Import CSS + Leaflet together to avoid CSS race condition
+    Promise.all([
+      import("leaflet"),
+      import("leaflet/dist/leaflet.css" as any),
+    ]).then(([L]) => {
+      if (!mapRef.current || mapInstanceRef.current) return;
+
       // Fix default icon issue with Next.js
       delete (L.Icon.Default.prototype as any)._getIconUrl;
       L.Icon.Default.mergeOptions({
@@ -61,17 +66,22 @@ export default function MapView({
         center,
         zoom,
         zoomControl: true,
-        scrollWheelZoom: false, // désactivé par défaut pour UX
+        scrollWheelZoom: false,
         attributionControl: true,
       });
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
         maxZoom: 19,
       }).addTo(map);
 
       mapInstanceRef.current = map;
-      renderMarkers(L, map);
+
+      // Force invalidate size after mount (fixes white tile issue)
+      setTimeout(() => {
+        map.invalidateSize();
+        renderMarkers(L, map);
+      }, 100);
     });
 
     return () => {
@@ -86,11 +96,11 @@ export default function MapView({
     if (!mapInstanceRef.current) return;
     import("leaflet").then((L) => {
       renderMarkers(L, mapInstanceRef.current);
+      mapInstanceRef.current.invalidateSize();
     });
   }, [pins, selectedId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function renderMarkers(L: any, map: any) {
-    // Clear existing markers
     markersRef.current.forEach((m) => m.remove());
     markersRef.current = [];
 
@@ -99,28 +109,21 @@ export default function MapView({
       const isSelected = pin.id === selectedId;
       const size = isSelected ? 44 : 36;
 
-      // Custom SVG icon
       const svgIcon = L.divIcon({
         html: `
           <div style="
-            width: ${size}px;
-            height: ${size}px;
-            background: ${pin.premium ? "#F5C518" : color};
-            border: 3px solid ${isSelected ? "#fff" : "rgba(255,255,255,0.8)"};
-            border-radius: 50% 50% 50% 0;
-            transform: rotate(-45deg);
-            box-shadow: 0 4px 12px rgba(0,0,0,${isSelected ? "0.4" : "0.2"});
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
+            width:${size}px;height:${size}px;
+            background:${pin.premium ? "#F5C518" : color};
+            border:3px solid ${isSelected ? "#fff" : "rgba(255,255,255,0.8)"};
+            border-radius:50% 50% 50% 0;
+            transform:rotate(-45deg);
+            box-shadow:0 4px 12px rgba(0,0,0,${isSelected ? "0.4" : "0.2"});
+            display:flex;align-items:center;justify-content:center;cursor:pointer;
           ">
-            <div style="transform: rotate(45deg); font-size: ${isSelected ? "18px" : "14px"};">
+            <div style="transform:rotate(45deg);font-size:${isSelected ? "18px" : "14px"};">
               ${getCategoryEmoji(pin.category)}
             </div>
-          </div>
-        `,
+          </div>`,
         className: "",
         iconSize: [size, size],
         iconAnchor: [size / 2, size],
@@ -129,32 +132,26 @@ export default function MapView({
 
       const marker = L.marker([pin.lat, pin.lng], { icon: svgIcon });
 
-      // Popup content
       const popupContent = `
-        <div style="font-family: var(--font-nunito, sans-serif); min-width: 180px; padding: 4px;">
-          <p style="font-size: 14px; font-weight: 800; color: #111827; margin: 0 0 4px;">${pin.name}</p>
-          ${pin.rating ? `<p style="font-size: 12px; color: #F5C518; margin: 0 0 6px;">⭐ ${pin.rating}</p>` : ""}
-          ${pin.slug ? `<a href="/listing/${pin.slug}" style="font-size: 12px; color: #F26522; font-weight: 700; text-decoration: none;">Voir la fiche →</a>` : ""}
-        </div>
-      `;
+        <div style="font-family:sans-serif;min-width:180px;padding:4px;">
+          <p style="font-size:14px;font-weight:800;color:#111827;margin:0 0 4px;">${pin.name}</p>
+          ${pin.rating ? `<p style="font-size:12px;color:#F5C518;margin:0 0 6px;">⭐ ${pin.rating}</p>` : ""}
+          ${pin.slug ? `<a href="/listing/${pin.slug}" style="font-size:12px;color:#F26522;font-weight:700;text-decoration:none;">Voir la fiche →</a>` : ""}
+        </div>`;
 
       marker.bindPopup(popupContent, { maxWidth: 220 });
-      marker.on("click", () => {
-        onPinClick?.(pin);
-      });
-
+      marker.on("click", () => onPinClick?.(pin));
       marker.addTo(map);
       markersRef.current.push(marker);
 
-      if (isSelected) {
-        setTimeout(() => marker.openPopup(), 100);
-      }
+      if (isSelected) setTimeout(() => marker.openPopup(), 100);
     });
 
-    // Fit bounds si plusieurs pins
-    if (pins.length > 1) {
-      const group = L.featureGroup(markersRef.current);
-      map.fitBounds(group.getBounds().pad(0.15));
+    if (pins.length > 1 && markersRef.current.length > 0) {
+      try {
+        const group = L.featureGroup(markersRef.current);
+        map.fitBounds(group.getBounds().pad(0.15));
+      } catch { /* ignore */ }
     }
   }
 
@@ -167,18 +164,11 @@ export default function MapView({
   }
 
   return (
-    <div className="relative rounded-2xl overflow-hidden border border-black/10 shadow-md">
-      <div ref={mapRef} style={{ height, width: "100%" }} />
-
-      {/* Attribution overlay */}
-      <div className="absolute bottom-2 left-2 z-[1000] bg-white/80 backdrop-blur-sm rounded-lg px-2 py-0.5 text-[10px] text-gray-500">
-        Carte: OpenStreetMap
-      </div>
-
-      {/* Enable scroll hint */}
-      <div className="absolute top-2 right-2 z-[1000] bg-white/90 backdrop-blur-sm rounded-lg px-2 py-1 text-[11px] text-gray-500 flex items-center gap-1">
-        🖱️ Maintenir Ctrl + scroll pour zoomer
-      </div>
+    <div className="relative rounded-2xl border border-black/10 shadow-md" style={{ overflow: "hidden" }}>
+      <div
+        ref={mapRef}
+        style={{ height, width: "100%", background: "#e8edf5" }}
+      />
     </div>
   );
 }
