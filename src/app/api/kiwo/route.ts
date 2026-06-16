@@ -63,7 +63,8 @@ function extractSearchIntent(
     ...history.filter((h) => h.role === "user").map((h) => h.content),
     message,
   ].join(" ");
-  const category = detectCategory(userContext);
+  // Current message category takes priority over history
+  const category = detectCategory(message) || detectCategory(userContext);
   // Current message city takes priority over history
   const ville = detectCity(norm(message)) || detectCity(userContext);
   const stopWords = new Set([
@@ -150,7 +151,7 @@ function generateSmartReply(
     return "Je connais **" + child.surnom + "** mais son age n'est pas renseigne dans ton profil.";
   }
 
-  const detected = detectCategory(fullContext);
+  const detected = detectCategory(message) || detectCategory(fullContext);
   const detectedCity = detectCity(norm(message)) || detectCity(fullContext);
   const cityStr = detectedCity ? " a **" + detectedCity + "**" : " en Tunisie";
 
