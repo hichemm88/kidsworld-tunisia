@@ -8,7 +8,7 @@ import MapView from "@/components/map/MapView";
 import {
   ArrowLeft, Heart, Share2, Star, MapPin, Clock, Phone, Globe,
   ChevronDown, ChevronUp, Crown, CheckCircle, Loader2,
-  ChevronLeft, ChevronRight, Navigation
+  Navigation, Images
 } from "lucide-react";
 
 interface Props {
@@ -46,7 +46,7 @@ export default function ListingDetail({ slug }: Props) {
   const [prices, setPrices] = useState<any[]>([]);
   const [media, setMedia] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
-  const [activeImg, setActiveImg] = useState(0);
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
   const [isFav, setIsFav] = useState(false);
   const [favId, setFavId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -187,52 +187,92 @@ export default function ListingDetail({ slug }: Props) {
 
       <div className="max-w-[800px] mx-auto px-5 py-6">
 
-        {/* Photo gallery */}
+        {/* Photo Gallery */}
         {media.length > 0 && (
           <div className="mb-6">
-            {/* Main image */}
-            <div className="relative rounded-2xl overflow-hidden aspect-video bg-gray-100">
-              <img
-                src={media[activeImg]?.url}
-                alt={`${listing.nom} - photo ${activeImg + 1}`}
-                className="w-full h-full object-cover"
-              />
-              {media.length > 1 && (
-                <>
-                  <button
-                    onClick={() => setActiveImg((i) => (i - 1 + media.length) % media.length)}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-black/40 hover:bg-black/60 text-white rounded-full flex items-center justify-center transition-all backdrop-blur-sm"
-                  >
-                    <ChevronLeft size={18} />
-                  </button>
-                  <button
-                    onClick={() => setActiveImg((i) => (i + 1) % media.length)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-black/40 hover:bg-black/60 text-white rounded-full flex items-center justify-center transition-all backdrop-blur-sm"
-                  >
-                    <ChevronRight size={18} />
-                  </button>
-                  <div className="absolute bottom-3 right-3 bg-black/50 text-white text-[11px] font-bold px-2.5 py-1 rounded-full backdrop-blur-sm">
-                    {activeImg + 1} / {media.length}
-                  </div>
-                </>
-              )}
-            </div>
-            {/* Thumbnails */}
-            {media.length > 1 && (
-              <div className="flex gap-2 mt-2 overflow-x-auto pb-1">
+            {media.length === 1 ? (
+              /* Single photo */
+              <button onClick={() => setLightboxIdx(0)} className="w-full rounded-2xl overflow-hidden aspect-video block">
+                <img src={media[0].url} alt={listing.nom} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+              </button>
+            ) : media.length === 2 ? (
+              /* 2 photos: side by side */
+              <div className="grid grid-cols-2 gap-2 rounded-2xl overflow-hidden h-64">
                 {media.map((m: any, i: number) => (
-                  <button
-                    key={i}
-                    onClick={() => setActiveImg(i)}
-                    className={`flex-shrink-0 w-16 h-12 rounded-xl overflow-hidden border-2 transition-all ${
-                      i === activeImg ? "border-[#0D2461] opacity-100" : "border-transparent opacity-60 hover:opacity-90"
-                    }`}
-                  >
-                    <img src={m.url} alt="" className="w-full h-full object-cover" />
+                  <button key={i} onClick={() => setLightboxIdx(i)} className="overflow-hidden">
+                    <img src={m.url} alt={`${listing.nom} ${i + 1}`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
                   </button>
                 ))}
               </div>
+            ) : (
+              /* 3+ photos: Airbnb-style hero grid */
+              <div className="rounded-2xl overflow-hidden">
+                <div className="grid grid-cols-3 gap-1.5 h-72">
+                  {/* Big left */}
+                  <button onClick={() => setLightboxIdx(0)} className="col-span-2 overflow-hidden">
+                    <img src={media[0].url} alt={listing.nom} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+                  </button>
+                  {/* Right column */}
+                  <div className="flex flex-col gap-1.5">
+                    {media.slice(1, 3).map((m: any, i: number) => (
+                      <div key={i} className="relative flex-1 overflow-hidden">
+                        <button onClick={() => setLightboxIdx(i + 1)} className="w-full h-full">
+                          <img src={m.url} alt={`${listing.nom} ${i + 2}`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+                        </button>
+                        {/* "+N" overlay on last tile if more photos */}
+                        {i === 1 && media.length > 3 && (
+                          <button
+                            onClick={() => setLightboxIdx(2)}
+                            className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-white font-bold hover:bg-black/40 transition-colors"
+                          >
+                            <Images size={20} className="mb-1" />
+                            <span className="text-[13px]">+{media.length - 3} photos</span>
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                {/* Extra photos row if more than 3 */}
+                {media.length > 3 && (
+                  <div className="flex gap-1.5 mt-1.5">
+                    {media.slice(3).map((m: any, i: number) => (
+                      <button key={i} onClick={() => setLightboxIdx(i + 3)}
+                        className="flex-1 h-20 overflow-hidden rounded-lg">
+                        <img src={m.url} alt="" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
+          </div>
+        )}
+
+        {/* Lightbox */}
+        {lightboxIdx !== null && (
+          <div
+            className="fixed inset-0 bg-black/90 z-[200] flex items-center justify-center"
+            onClick={() => setLightboxIdx(null)}
+          >
+            <button
+              onClick={(e) => { e.stopPropagation(); setLightboxIdx((i) => i !== null ? (i - 1 + media.length) % media.length : 0); }}
+              className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/20 hover:bg-white/40 text-white rounded-full flex items-center justify-center text-xl font-bold transition-all"
+            >‹</button>
+            <img
+              src={media[lightboxIdx]?.url}
+              alt=""
+              className="max-h-[85vh] max-w-[90vw] object-contain rounded-xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <button
+              onClick={(e) => { e.stopPropagation(); setLightboxIdx((i) => i !== null ? (i + 1) % media.length : 0); }}
+              className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/20 hover:bg-white/40 text-white rounded-full flex items-center justify-center text-xl font-bold transition-all"
+            >›</button>
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/70 text-[13px] font-bold bg-black/40 px-3 py-1 rounded-full">
+              {lightboxIdx + 1} / {media.length}
+            </div>
+            <button onClick={() => setLightboxIdx(null)} className="absolute top-4 right-4 text-white/70 hover:text-white text-2xl font-bold w-10 h-10 flex items-center justify-center">✕</button>
           </div>
         )}
 

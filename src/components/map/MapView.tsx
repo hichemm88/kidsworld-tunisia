@@ -164,7 +164,7 @@ export default function MapView({
   }
 
   return (
-    <div className="relative rounded-2xl border border-black/10 shadow-md" style={{ overflow: "hidden" }}>
+    <div className="relative rounded-2xl border border-black/10 shadow-md" style={{ overflow: "hidden", isolation: "isolate" }}>
       <div
         ref={mapRef}
         style={{ height, width: "100%", background: "#e8edf5" }}
