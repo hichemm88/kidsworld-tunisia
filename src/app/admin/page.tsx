@@ -1,17 +1,10 @@
 import { Metadata } from "next";
-import AdminDashboard from "@/components/admin/AdminDashboard";
-import Navbar from "@/components/layout/Navbar";
+import AdminHome from "@/components/admin/AdminHome";
 
 export const metadata: Metadata = {
-  title: "Administration — KidsWorld Tunisia",
-  robots: { index: false, follow: false },
+  title: "Dashboard — KidsWorld Admin",
 };
 
 export default function AdminPage() {
-  return (
-    <>
-      <Navbar />
-      <AdminDashboard />
-    </>
-  );
+  return <AdminHome />;
 }
