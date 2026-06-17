@@ -66,9 +66,8 @@ export async function POST(request: NextRequest) {
     listing: { id: lid, nom: listing.nom },
     serviceRole: {
       mediaCount: media?.length ?? 0,
-      mediaError: me?.message ?? null,
       hoursCount: hours?.length ?? 0,
-      hoursError: he?.message ?? null,
+      hoursAll: hours,
       hoursInsertError: hoursInsertErr?.message ?? null,
       hoursInsertCode: hoursInsertErr?.code ?? null,
     },
