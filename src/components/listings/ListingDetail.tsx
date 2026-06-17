@@ -7,7 +7,8 @@ import { createClient } from "@/lib/supabase-client";
 import MapView from "@/components/map/MapView";
 import {
   ArrowLeft, Heart, Share2, Star, MapPin, Clock, Phone, Globe,
-  ChevronDown, ChevronUp, Crown, CheckCircle, Loader2
+  ChevronDown, ChevronUp, Crown, CheckCircle, Loader2,
+  ChevronLeft, ChevronRight, Navigation
 } from "lucide-react";
 
 interface Props {
@@ -45,6 +46,7 @@ export default function ListingDetail({ slug }: Props) {
   const [prices, setPrices] = useState<any[]>([]);
   const [media, setMedia] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
+  const [activeImg, setActiveImg] = useState(0);
   const [isFav, setIsFav] = useState(false);
   const [favId, setFavId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -187,8 +189,50 @@ export default function ListingDetail({ slug }: Props) {
 
         {/* Photo gallery */}
         {media.length > 0 && (
-          <div className="rounded-2xl overflow-hidden mb-6 aspect-video bg-gray-100">
-            <img src={media[0].url} alt={listing.nom} className="w-full h-full object-cover" />
+          <div className="mb-6">
+            {/* Main image */}
+            <div className="relative rounded-2xl overflow-hidden aspect-video bg-gray-100">
+              <img
+                src={media[activeImg]?.url}
+                alt={`${listing.nom} - photo ${activeImg + 1}`}
+                className="w-full h-full object-cover"
+              />
+              {media.length > 1 && (
+                <>
+                  <button
+                    onClick={() => setActiveImg((i) => (i - 1 + media.length) % media.length)}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-black/40 hover:bg-black/60 text-white rounded-full flex items-center justify-center transition-all backdrop-blur-sm"
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+                  <button
+                    onClick={() => setActiveImg((i) => (i + 1) % media.length)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-black/40 hover:bg-black/60 text-white rounded-full flex items-center justify-center transition-all backdrop-blur-sm"
+                  >
+                    <ChevronRight size={18} />
+                  </button>
+                  <div className="absolute bottom-3 right-3 bg-black/50 text-white text-[11px] font-bold px-2.5 py-1 rounded-full backdrop-blur-sm">
+                    {activeImg + 1} / {media.length}
+                  </div>
+                </>
+              )}
+            </div>
+            {/* Thumbnails */}
+            {media.length > 1 && (
+              <div className="flex gap-2 mt-2 overflow-x-auto pb-1">
+                {media.map((m: any, i: number) => (
+                  <button
+                    key={i}
+                    onClick={() => setActiveImg(i)}
+                    className={`flex-shrink-0 w-16 h-12 rounded-xl overflow-hidden border-2 transition-all ${
+                      i === activeImg ? "border-[#0D2461] opacity-100" : "border-transparent opacity-60 hover:opacity-90"
+                    }`}
+                  >
+                    <img src={m.url} alt="" className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -247,15 +291,16 @@ export default function ListingDetail({ slug }: Props) {
                     const h = hours.find((x) => x.jour === day);
                     const today = new Date().toLocaleDateString("fr-FR", { weekday: "long" });
                     const isToday = today.charAt(0).toUpperCase() + today.slice(1) === day;
+                    const isOpen = h && h.ouvert;
                     return (
                       <div key={day} className={`flex items-center justify-between py-1.5 ${isToday ? "font-bold" : ""}`}>
                         <span className={`text-[13px] ${isToday ? "text-[#0D2461]" : "text-gray-500"}`}>{day}</span>
-                        {h ? (
+                        {isOpen ? (
                           <span className={`text-[13px] ${isToday ? "text-[#0D2461]" : "text-gray-600"}`}>
                             {h.heure_ouverture?.slice(0, 5)} – {h.heure_fermeture?.slice(0, 5)}
                           </span>
                         ) : (
-                          <span className="text-[12px] text-gray-400">Fermé</span>
+                          <span className="text-[12px] text-red-400 font-medium">Fermé</span>
                         )}
                       </div>
                     );
@@ -393,6 +438,14 @@ export default function ListingDetail({ slug }: Props) {
                     height="200px"
                   />
                 </div>
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${listing.lat},${listing.lng}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 flex items-center justify-center gap-2 w-full py-2.5 bg-[#4285F4] hover:bg-[#3367D6] text-white font-bold text-[13px] rounded-xl transition-all"
+                >
+                  <Navigation size={14} /> Obtenir l&apos;itinéraire
+                </a>
               </div>
             )}
 
