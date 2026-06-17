@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { CheckCircle, Crown, Loader2, ArrowRight } from "lucide-react";
+import { CheckCircle, Crown, Loader2, ArrowRight, AlertCircle } from "lucide-react";
 import Link from "next/link";
 
 export default function PaymentSuccess() {
@@ -106,8 +106,8 @@ export default function PaymentSuccess() {
   return (
     <div className="min-h-screen bg-[#F7F6F2] flex items-center justify-center p-6">
       <div className="bg-white rounded-3xl p-8 max-w-md w-full text-center shadow-xl border border-red-100">
-        <div className="text-5xl mb-4">😕</div>
-        <h2 className="font-bebas text-[28px] text-[#111827] mb-2">Paiement non confirmé</h2>
+        <div className="flex justify-center mb-4"><AlertCircle size={48} className="text-red-400" /></div>
+        <h2 className="text-[22px] font-extrabold text-[#111827] mb-2">Paiement non confirmé</h2>
         <p className="text-gray-400 text-[13px] mb-6">
           Votre paiement n&apos;a pas pu être confirmé. Si vous avez été débité, contactez notre support.
         </p>

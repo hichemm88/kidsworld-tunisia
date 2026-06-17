@@ -121,7 +121,7 @@ export default function MapView({
             display:flex;align-items:center;justify-content:center;cursor:pointer;
           ">
             <div style="transform:rotate(45deg);font-size:${isSelected ? "18px" : "14px"};">
-              ${getCategoryEmoji(pin.category)}
+              ${getCategoryLabel(pin.category)}
             </div>
           </div>`,
         className: "",
@@ -135,7 +135,7 @@ export default function MapView({
       const popupContent = `
         <div style="font-family:sans-serif;min-width:180px;padding:4px;">
           <p style="font-size:14px;font-weight:800;color:#111827;margin:0 0 4px;">${pin.name}</p>
-          ${pin.rating ? `<p style="font-size:12px;color:#F5C518;margin:0 0 6px;">⭐ ${pin.rating}</p>` : ""}
+          ${pin.rating ? `<p style="font-size:12px;color:#F5C518;font-weight:700;margin:0 0 6px;">★ ${pin.rating}</p>` : ""}
           ${pin.slug ? `<a href="/listing/${pin.slug}" style="font-size:12px;color:#F26522;font-weight:700;text-decoration:none;">Voir la fiche →</a>` : ""}
         </div>`;
 
@@ -155,12 +155,12 @@ export default function MapView({
     }
   }
 
-  function getCategoryEmoji(cat?: string): string {
-    const emojis: Record<string, string> = {
-      sante: "🏥", education: "🎓", loisirs: "🎪",
-      ateliers: "🎨", fetes: "🎂", shopping: "🛍",
+  function getCategoryLabel(cat?: string): string {
+    const labels: Record<string, string> = {
+      sante: "♥", education: "✦", loisirs: "⚡",
+      ateliers: "✏", fetes: "✿", shopping: "◆",
     };
-    return emojis[cat ?? ""] ?? "📍";
+    return labels[cat ?? ""] ?? "●";
   }
 
   return (

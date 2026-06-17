@@ -7,8 +7,35 @@ import { createClient } from "@/lib/supabase-client";
 import Navbar from "@/components/layout/Navbar";
 import {
   Heart, Star, History, Baby, Plus, Edit2, Trash2, LogOut,
-  X, Save, ChevronRight, Clock, MapPin, Settings, Eye, EyeOff
+  X, Save, ChevronRight, Clock, MapPin, Settings, Eye, EyeOff,
+  BookOpen, Zap, Palette, Gift, ShoppingBag, Building2, Search,
 } from "lucide-react";
+
+const CAT_ICONS: Record<string, { Icon: React.ComponentType<any>; color: string }> = {
+  sante:     { Icon: Heart,        color: "#16a34a" },
+  education: { Icon: BookOpen,     color: "#7C3AED" },
+  loisirs:   { Icon: Zap,         color: "#2563EB" },
+  ateliers:  { Icon: Palette,     color: "#DC2626" },
+  fetes:     { Icon: Gift,        color: "#DB2777" },
+  shopping:  { Icon: ShoppingBag, color: "#0891B2" },
+};
+
+function SmallCategoryIcon({ emoji, slug }: { emoji?: string; slug?: string }) {
+  // Try to derive slug from emoji if not provided
+  const emojiToSlug: Record<string, string> = {
+    "🏥": "sante", "🎓": "education", "🎪": "loisirs",
+    "🎨": "ateliers", "🎂": "fetes", "🛍": "shopping",
+  };
+  const resolvedSlug = slug ?? (emoji ? emojiToSlug[emoji] : undefined);
+  const cat = resolvedSlug ? CAT_ICONS[resolvedSlug] : null;
+  const Icon = cat?.Icon ?? Building2;
+  const color = cat?.color ?? "#F26522";
+  return (
+    <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: color + "18" }}>
+      <Icon size={18} style={{ color }} strokeWidth={1.75} />
+    </div>
+  );
+}
 
 interface Child {
   id: string;
@@ -337,9 +364,9 @@ export default function ProfilPage() {
               <h2 className="font-bold text-[16px] text-[#0D2461]">Mes favoris ({favoris.length})</h2>
               {favoris.length === 0 ? (
                 <div className="bg-white rounded-2xl border border-black/8 p-8 text-center">
-                  <div className="text-4xl mb-3">❤️</div>
+                  <div className="flex justify-center mb-3"><Heart size={36} className="text-gray-200" /></div>
                   <p className="font-bold text-[15px] text-gray-700 mb-1">Aucun favori pour l&apos;instant</p>
-                  <p className="text-[13px] text-gray-400 mb-4">Parcourez les listings et cliquez sur ❤️ pour les sauvegarder</p>
+                  <p className="text-[13px] text-gray-400 mb-4">Parcourez les listings et cliquez sur le cœur pour les sauvegarder</p>
                   <Link href="/listings"
                     className="bg-[#0D2461] text-white text-[13px] font-bold px-5 py-2 rounded-xl hover:bg-[#1a3a8a] transition-all inline-block">
                     Explorer les listings
@@ -348,9 +375,7 @@ export default function ProfilPage() {
               ) : (
                 favoris.map((fav) => (
                   <div key={fav.id} className="bg-white rounded-2xl border border-black/8 p-4 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-[#F7F6F2] flex items-center justify-center text-xl">
-                      {fav.listing?.category_emoji || "📍"}
-                    </div>
+                    <SmallCategoryIcon emoji={fav.listing?.category_emoji} />
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-[14px] text-[#0D2461] truncate">{fav.listing?.nom}</p>
                       <div className="flex items-center gap-2 text-[11px] text-gray-400">
@@ -381,7 +406,7 @@ export default function ProfilPage() {
               <h2 className="font-bold text-[16px] text-[#0D2461]">Mes avis ({reviews.length})</h2>
               {reviews.length === 0 ? (
                 <div className="bg-white rounded-2xl border border-black/8 p-8 text-center">
-                  <div className="text-4xl mb-3">⭐</div>
+                  <div className="flex justify-center mb-3"><Star size={36} className="text-gray-200" /></div>
                   <p className="font-bold text-[15px] text-gray-700 mb-1">Aucun avis encore</p>
                   <p className="text-[13px] text-gray-400">Partagez votre expérience sur les établissements visités</p>
                 </div>
@@ -389,7 +414,7 @@ export default function ProfilPage() {
                 reviews.map((rev) => (
                   <div key={rev.id} className="bg-white rounded-2xl border border-black/8 p-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="text-lg">{rev.listing?.category_emoji || "📍"}</span>
+                      <SmallCategoryIcon emoji={rev.listing?.category_emoji} />
                       <Link href={`/listing/${rev.listing?.slug}`}
                         className="font-bold text-[14px] text-[#0D2461] hover:underline">
                         {rev.listing?.nom}
@@ -542,7 +567,7 @@ export default function ProfilPage() {
           {/* Historique */}
           {tab === "historique" && (
             <div className="bg-white rounded-2xl border border-black/8 p-8 text-center mb-8">
-              <div className="text-4xl mb-3">🔍</div>
+              <div className="flex justify-center mb-3"><Search size={36} className="text-gray-200" /></div>
               <p className="font-bold text-[15px] text-gray-700 mb-1">Historique de recherche</p>
               <p className="text-[13px] text-gray-400 mb-4">Retrouvez vos recherches récentes ici bientôt</p>
               <Link href="/listings"
