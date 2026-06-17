@@ -207,9 +207,10 @@ export default function ListingsPage() {
   // Client-side sort
   const sorted = useMemo(() => {
     const d = [...listings];
-    if (sort === "note") d.sort((a, b) => b.note_moyenne - a.note_moyenne);
-    else if (sort === "avis") d.sort((a, b) => b.nb_avis - a.nb_avis);
-    else d.sort((a, b) => (b.plan === "premium" ? 1 : 0) - (a.plan === "premium" ? 1 : 0));
+    const premiumFirst = (a: Listing, b: Listing) => (b.plan === "premium" ? 1 : 0) - (a.plan === "premium" ? 1 : 0);
+    if (sort === "note") d.sort((a, b) => premiumFirst(a, b) || b.note_moyenne - a.note_moyenne);
+    else if (sort === "avis") d.sort((a, b) => premiumFirst(a, b) || b.nb_avis - a.nb_avis);
+    else d.sort(premiumFirst);
     return d;
   }, [listings, sort]);
 
