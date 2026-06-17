@@ -44,6 +44,7 @@ interface Listing {
   age_max?: number;
   prix_label?: string;
   category_nom?: string;
+  category_slug?: string;
   category_emoji?: string;
   category_couleur?: string;
   note_moyenne: number;
@@ -118,7 +119,7 @@ function ListingCard({ l, onClick, isSelected }: { l: Listing; onClick?: () => v
       {/* Category icon / thumbnail */}
       <div className="w-[60px] h-[60px] rounded-xl flex-shrink-0 overflow-hidden relative">
         {l.plan === "premium" && <div className="absolute top-0 left-0 right-0 h-[3px] bg-amber-400 z-10" />}
-        <CategoryIcon slug={Object.keys(CAT_COLOR).find((k) => l.category_nom?.toLowerCase().includes(k))} color={l.category_couleur} size={24} />
+        <CategoryIcon slug={l.category_slug} color={l.category_couleur} size={24} />
       </div>
       {/* Content */}
       <div className="flex-1 min-w-0">
@@ -156,7 +157,7 @@ function GridCard({ l }: { l: Listing }) {
     <Link href={`/listing/${l.slug}`} className={`bg-white rounded-2xl border-[1.5px] overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all ${l.plan === "premium" ? "border-amber-300" : "border-black/8"}`}>
       <div className="h-[120px] relative overflow-hidden">
         {l.plan === "premium" && <div className="absolute top-0 left-0 right-0 h-[3px] bg-amber-400 z-10" />}
-        <CategoryIcon slug={Object.keys(CAT_COLOR).find((k) => l.category_nom?.toLowerCase().includes(k))} color={l.category_couleur} size={36} />
+        <CategoryIcon slug={l.category_slug} color={l.category_couleur} size={36} />
       </div>
       <div className="p-3">
         <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full uppercase" style={{ background: color + "20", color }}>{l.category_nom}</span>
@@ -433,7 +434,7 @@ export default function ListingsPage() {
               </button>
               <div className="flex gap-3 mb-3">
                 <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0">
-                  <CategoryIcon slug={Object.keys(CAT_COLOR).find((k) => selectedListing.category_nom?.toLowerCase().includes(k))} color={selectedListing.category_couleur} size={22} />
+                  <CategoryIcon slug={selectedListing.category_slug} color={selectedListing.category_couleur} size={22} />
                 </div>
                 <div className="min-w-0">
                   <p className="text-[13px] font-extrabold text-[#111827] leading-tight truncate">{selectedListing.nom}</p>
