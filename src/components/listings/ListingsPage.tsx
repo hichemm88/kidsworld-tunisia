@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   SlidersHorizontal, List, LayoutGrid, X, Star, MapPin,
   ChevronDown, Search, Map, Loader2, Sparkles,
+  Heart, BookOpen, Zap, Palette, Gift, ShoppingBag, Building2,
 } from "lucide-react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -50,19 +51,39 @@ interface Listing {
 }
 
 const CATS = [
-  { slug: "all", label: "Tout" },
-  { slug: "loisirs", label: "🎪 Loisirs" },
-  { slug: "sante", label: "🏥 Santé" },
-  { slug: "education", label: "🎓 Éducation" },
-  { slug: "ateliers", label: "🎨 Ateliers" },
-  { slug: "fetes", label: "🎂 Fêtes" },
-  { slug: "shopping", label: "🛍 Shopping" },
+  { slug: "all", label: "Tout", Icon: null as React.ComponentType<any> | null },
+  { slug: "loisirs", label: "Loisirs", Icon: Zap as React.ComponentType<any> },
+  { slug: "sante", label: "Santé", Icon: Heart as React.ComponentType<any> },
+  { slug: "education", label: "Éducation", Icon: BookOpen as React.ComponentType<any> },
+  { slug: "ateliers", label: "Ateliers", Icon: Palette as React.ComponentType<any> },
+  { slug: "fetes", label: "Fêtes", Icon: Gift as React.ComponentType<any> },
+  { slug: "shopping", label: "Shopping", Icon: ShoppingBag as React.ComponentType<any> },
 ];
 
 const CAT_COLOR: Record<string, string> = {
   loisirs: "#2563EB", sante: "#16a34a", education: "#7C3AED",
   ateliers: "#DC2626", fetes: "#DB2777", shopping: "#0891B2",
 };
+
+const CAT_ICONS: Record<string, { Icon: React.ComponentType<any>; color: string }> = {
+  sante:     { Icon: Heart,        color: "#16a34a" },
+  education: { Icon: BookOpen,     color: "#7C3AED" },
+  loisirs:   { Icon: Zap,         color: "#2563EB" },
+  ateliers:  { Icon: Palette,     color: "#DC2626" },
+  fetes:     { Icon: Gift,        color: "#DB2777" },
+  shopping:  { Icon: ShoppingBag, color: "#0891B2" },
+};
+
+function CategoryIcon({ slug, color, size = 22 }: { slug?: string; color?: string; size?: number }) {
+  const cat = slug ? CAT_ICONS[slug] : null;
+  const iconColor = cat?.color ?? color ?? "#F26522";
+  const Icon = cat?.Icon ?? Building2;
+  return (
+    <div className="w-full h-full flex items-center justify-center" style={{ background: iconColor + "18" }}>
+      <Icon size={size} style={{ color: iconColor }} strokeWidth={1.75} />
+    </div>
+  );
+}
 
 const VILLES = ["Tunis", "La Marsa", "Ariana", "Ben Arous", "Manouba", "La Soukra", "Ennasr"];
 
@@ -94,10 +115,10 @@ function ListingCard({ l, onClick, isSelected }: { l: Listing; onClick?: () => v
         ${isSelected ? "ring-2 ring-[#0D2461] shadow-lg" : "hover:shadow-lg hover:-translate-y-0.5"}
       `}
     >
-      {/* Emoji / thumbnail */}
-      <div className="w-[60px] h-[60px] rounded-xl flex items-center justify-center text-3xl flex-shrink-0 bg-gradient-to-br from-[#F7F6F2] to-[#EDE9E0] relative">
-        {l.plan === "premium" && <div className="absolute top-0 left-0 right-0 h-[3px] bg-amber-400 rounded-t-xl" />}
-        <span>{l.category_emoji ?? "📍"}</span>
+      {/* Category icon / thumbnail */}
+      <div className="w-[60px] h-[60px] rounded-xl flex-shrink-0 overflow-hidden relative">
+        {l.plan === "premium" && <div className="absolute top-0 left-0 right-0 h-[3px] bg-amber-400 z-10" />}
+        <CategoryIcon slug={Object.keys(CAT_COLOR).find((k) => l.category_nom?.toLowerCase().includes(k))} color={l.category_couleur} size={24} />
       </div>
       {/* Content */}
       <div className="flex-1 min-w-0">
@@ -133,9 +154,9 @@ function GridCard({ l }: { l: Listing }) {
   const color = CAT_COLOR[l.category_nom?.toLowerCase() ?? ""] ?? l.category_couleur ?? "#F26522";
   return (
     <Link href={`/listing/${l.slug}`} className={`bg-white rounded-2xl border-[1.5px] overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all ${l.plan === "premium" ? "border-amber-300" : "border-black/8"}`}>
-      <div className="h-[120px] flex items-center justify-center text-4xl bg-gradient-to-br from-[#F7F6F2] to-[#EDE9E0] relative">
-        {l.plan === "premium" && <div className="absolute top-0 left-0 right-0 h-[3px] bg-amber-400" />}
-        {l.category_emoji ?? "📍"}
+      <div className="h-[120px] relative overflow-hidden">
+        {l.plan === "premium" && <div className="absolute top-0 left-0 right-0 h-[3px] bg-amber-400 z-10" />}
+        <CategoryIcon slug={Object.keys(CAT_COLOR).find((k) => l.category_nom?.toLowerCase().includes(k))} color={l.category_couleur} size={36} />
       </div>
       <div className="p-3">
         <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full uppercase" style={{ background: color + "20", color }}>{l.category_nom}</span>
@@ -272,9 +293,9 @@ export default function ListingsPage() {
                   <button
                     key={s}
                     onMouseDown={() => { setSearchQuery(s); setShowSuggestions(false); }}
-                    className="w-full text-left px-3 py-2 text-[13px] text-gray-700 hover:bg-[#F7F6F2] transition-colors"
+                    className="w-full text-left px-3 py-2 text-[13px] text-gray-700 hover:bg-[#F7F6F2] transition-colors flex items-center gap-2"
                   >
-                    🔍 {s}
+                    <Search size={12} className="text-gray-300 flex-shrink-0" />{s}
                   </button>
                 ))}
               </div>
@@ -299,19 +320,24 @@ export default function ListingsPage() {
       {/* ── Category pills ── */}
       <div className="bg-white border-b border-black/8 px-4 py-2 overflow-x-auto no-scrollbar flex-shrink-0">
         <div className="flex items-center gap-2 max-w-[1200px] mx-auto">
-          {CATS.map((c) => (
-            <button
-              key={c.slug}
-              onClick={() => setActiveCat(c.slug)}
-              className={`text-[12px] font-bold px-3 py-1.5 rounded-full border whitespace-nowrap transition-all
-                ${activeCat === c.slug
-                  ? "bg-[#F26522] border-[#F26522] text-white shadow-sm"
-                  : "bg-white border-black/15 text-gray-600 hover:border-[#F26522] hover:text-[#F26522]"
-                }`}
-            >
-              {c.label}
-            </button>
-          ))}
+          {CATS.map((c) => {
+            const catColor = c.slug !== "all" ? CAT_COLOR[c.slug] : undefined;
+            const isActive = activeCat === c.slug;
+            return (
+              <button
+                key={c.slug}
+                onClick={() => setActiveCat(c.slug)}
+                className={`inline-flex items-center gap-1.5 text-[12px] font-bold px-3 py-1.5 rounded-full border whitespace-nowrap transition-all
+                  ${isActive
+                    ? "bg-[#F26522] border-[#F26522] text-white shadow-sm"
+                    : "bg-white border-black/15 text-gray-600 hover:border-[#F26522] hover:text-[#F26522]"
+                  }`}
+              >
+                {c.Icon && <c.Icon size={11} style={isActive ? {} : { color: catColor }} />}
+                {c.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -364,7 +390,7 @@ export default function ListingsPage() {
           <div className={`${view === "grid" ? "w-full" : "w-full lg:w-[420px] xl:w-[480px]"} flex-shrink-0 overflow-y-auto p-4 flex flex-col gap-3`}>
             {sorted.length === 0 && !loading ? (
               <div className="text-center py-16 text-gray-400">
-                <p className="text-5xl mb-4">🔍</p>
+                <div className="flex justify-center mb-4"><Search size={40} className="opacity-25" /></div>
                 <p className="font-extrabold text-[#111827] mb-1">Aucun résultat trouvé</p>
                 <p className="text-sm mb-4">Essayez avec d&apos;autres mots-clés ou filtres</p>
                 <button onClick={() => { setSearchQuery(""); setActiveCat("all"); }} className="text-[#F26522] font-bold text-sm hover:underline">
@@ -406,8 +432,8 @@ export default function ListingsPage() {
                 <X size={14} />
               </button>
               <div className="flex gap-3 mb-3">
-                <div className="w-12 h-12 rounded-xl bg-[#F7F6F2] flex items-center justify-center text-2xl flex-shrink-0">
-                  {selectedListing.category_emoji}
+                <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0">
+                  <CategoryIcon slug={Object.keys(CAT_COLOR).find((k) => selectedListing.category_nom?.toLowerCase().includes(k))} color={selectedListing.category_couleur} size={22} />
                 </div>
                 <div className="min-w-0">
                   <p className="text-[13px] font-extrabold text-[#111827] leading-tight truncate">{selectedListing.nom}</p>

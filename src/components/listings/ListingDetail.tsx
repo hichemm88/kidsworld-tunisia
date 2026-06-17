@@ -8,8 +8,17 @@ import MapView from "@/components/map/MapView";
 import {
   ArrowLeft, Heart, Share2, Star, MapPin, Clock, Phone, Globe,
   ChevronDown, ChevronUp, Crown, CheckCircle, Loader2,
-  Navigation, Images
+  Navigation, Images, Building2, Zap, BookOpen, Palette, Gift, ShoppingBag,
 } from "lucide-react";
+
+const CAT_ICONS: Record<string, { Icon: React.ComponentType<any>; color: string }> = {
+  sante:     { Icon: Heart,        color: "#16a34a" },
+  education: { Icon: BookOpen,     color: "#7C3AED" },
+  loisirs:   { Icon: Zap,          color: "#2563EB" },
+  ateliers:  { Icon: Palette,      color: "#DC2626" },
+  fetes:     { Icon: Gift,         color: "#DB2777" },
+  shopping:  { Icon: ShoppingBag,  color: "#0891B2" },
+};
 
 interface Props {
   slug: string;
@@ -140,8 +149,10 @@ export default function ListingDetail({ slug }: Props) {
   if (!listing) {
     return (
       <div className="min-h-screen bg-[#F7F6F2] flex flex-col items-center justify-center gap-4">
-        <div className="text-5xl">😕</div>
-        <h1 className="font-bebas text-[32px] text-[#0D2461]">Listing introuvable</h1>
+        <div className="w-16 h-16 rounded-2xl bg-[#0D2461]/8 flex items-center justify-center">
+          <Building2 size={28} className="text-[#0D2461]/40" />
+        </div>
+        <h1 className="text-[22px] font-extrabold text-[#0D2461]">Listing introuvable</h1>
         <Link href="/listings" className="bg-[#0D2461] text-white font-bold px-6 py-3 rounded-xl hover:bg-[#1a3a8a] transition-all">
           Retour aux listings
         </Link>
@@ -187,7 +198,19 @@ export default function ListingDetail({ slug }: Props) {
 
       <div className="max-w-[800px] mx-auto px-5 py-6">
 
-        {/* Photo Gallery */}
+        {/* Photo Gallery — placeholder quand pas de media */}
+        {media.length === 0 && (
+          <div className="mb-6 rounded-2xl bg-gray-100 border border-black/6 h-48 flex flex-col items-center justify-center gap-2 text-gray-400">
+            {(() => {
+              const cat = CAT_ICONS[listing.category_slug];
+              const Icon = cat?.Icon ?? Building2;
+              const color = cat?.color ?? "#9ca3af";
+              return <Icon size={36} style={{ color, opacity: 0.4 }} strokeWidth={1.5} />;
+            })()}
+            <p className="text-[13px]">Aucune photo disponible</p>
+          </div>
+        )}
+
         {media.length > 0 && (
           <div className="mb-6">
             {media.length === 1 ? (
@@ -279,23 +302,30 @@ export default function ListingDetail({ slug }: Props) {
         {/* Header */}
         <div className="bg-white rounded-2xl border border-black/8 p-5 mb-4">
           <div className="flex items-start gap-3 mb-3">
-            <div className="w-12 h-12 rounded-2xl bg-[#F7F6F2] flex items-center justify-center text-2xl flex-shrink-0">
-              {listing.category_emoji || "📍"}
-            </div>
+            {(() => {
+              const cat = CAT_ICONS[listing.category_slug];
+              const Icon = cat?.Icon ?? Building2;
+              const color = cat?.color ?? "#F26522";
+              return (
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: color + "15" }}>
+                  <Icon size={22} style={{ color }} strokeWidth={1.75} />
+                </div>
+              );
+            })()}
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap mb-1">
+              <div className="flex items-center gap-2 flex-wrap mb-1.5">
                 {listing.plan === "premium" && (
-                  <span className="inline-flex items-center gap-1 bg-[#F5C518]/15 text-[#B8941A] text-[10px] font-bold px-2 py-0.5 rounded-full">
-                    <Crown size={10} /> Premium
+                  <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-200">
+                    <Crown size={9} /> Premium
                   </span>
                 )}
-                {listing.is_active && (
-                  <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                    <CheckCircle size={10} /> Actif
+                {listing.is_verified && (
+                  <span className="inline-flex items-center gap-1 bg-green-50 text-green-700 text-[10px] font-semibold px-2 py-0.5 rounded-full">
+                    <CheckCircle size={9} /> Vérifié
                   </span>
                 )}
               </div>
-              <h1 className="font-bebas text-[28px] text-[#0D2461] tracking-wide leading-tight">{listing.nom}</h1>
+              <h1 className="text-[22px] font-extrabold text-[#0D2461] leading-tight">{listing.nom}</h1>
               <div className="flex items-center gap-3 flex-wrap mt-1">
                 <div className="flex items-center gap-1">
                   <Star size={14} className="text-[#F5C518] fill-[#F5C518]" />
@@ -445,7 +475,7 @@ export default function ListingDetail({ slug }: Props) {
               <div className="flex flex-col gap-2">
                 {listing.phone && (
                   <a href={`tel:${listing.phone}`}
-                    className="flex items-center gap-2.5 p-3 bg-[#0D2461] text-white rounded-xl hover:bg-[#1a3a8a] transition-all text-[13px] font-bold">
+                    className="flex items-center gap-2.5 p-3 bg-[#F26522] text-white rounded-xl hover:bg-[#e05a1a] transition-all text-[13px] font-bold">
                     <Phone size={15} /> {listing.phone}
                   </a>
                 )}
