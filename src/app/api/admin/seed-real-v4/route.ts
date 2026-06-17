@@ -762,7 +762,7 @@ export async function POST(request: NextRequest) {
         lng: listing.lng,
         plan: listing.plan,
         category_id: cat.id,
-        actif: true,
+        is_active: true,
       }).eq("id", listingId);
     } else {
       const { data: newListing, error: insertErr } = await supabase
@@ -783,7 +783,7 @@ export async function POST(request: NextRequest) {
           lng: listing.lng,
           plan: listing.plan,
           category_id: cat.id,
-          actif: true,
+          is_active: true,
         })
         .select("id")
         .single();
