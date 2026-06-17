@@ -114,7 +114,7 @@ export default function Hero() {
                 placeholder="Pédiatre, cours de natation, anniversaire..."
                 className="flex-1 border-none outline-none text-[15px] text-[#111827] bg-transparent py-3.5 px-2.5 min-w-0"
               />
-              <div ref={villeRef} className="relative flex-shrink-0">
+              <div ref={villeRef} className="relative flex-shrink-0 hidden sm:block">
                 <div className="w-px h-7 bg-black/10 mr-2" />
                 <button type="button" onClick={() => setShowVilles(!showVilles)}
                   className="flex items-center gap-1.5 text-[13px] font-semibold text-gray-500 pr-2 hover:text-[#0D2461] transition-colors">
@@ -136,8 +136,9 @@ export default function Hero() {
                 )}
               </div>
               <button type="button" onClick={() => handleSearch()}
-                className="bg-[#F26522] hover:bg-[#e05a1a] active:scale-95 text-white rounded-[13px] m-1.5 px-5 py-2.5 text-[14px] font-bold transition-all whitespace-nowrap">
-                Rechercher
+                className="bg-[#F26522] hover:bg-[#e05a1a] active:scale-95 text-white rounded-[13px] m-1.5 px-3 sm:px-5 py-2.5 text-[13px] sm:text-[14px] font-bold transition-all whitespace-nowrap">
+                <span className="hidden sm:inline">Rechercher</span>
+                <Search size={16} className="sm:hidden" />
               </button>
             </div>
 

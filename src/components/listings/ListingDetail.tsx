@@ -178,7 +178,7 @@ export default function ListingDetail({ slug }: Props) {
     <div className="min-h-screen bg-[#F7F6F2]">
 
       {/* Back bar */}
-      <div className="bg-white border-b border-black/8 px-5 py-3 flex items-center gap-3 sticky top-16 z-40">
+      <div className="bg-white border-b border-black/8 px-5 py-3 flex items-center gap-3 sticky top-[60px] z-40">
         <button onClick={() => router.back()} className="flex items-center gap-1.5 text-[13px] font-semibold text-gray-500 hover:text-[#0D2461] transition-colors">
           <ArrowLeft size={15} /> Retour
         </button>
@@ -347,8 +347,8 @@ export default function ListingDetail({ slug }: Props) {
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="md:col-span-2 flex flex-col gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+          <div className="md:col-span-2 flex flex-col gap-4 order-2 md:order-1">
 
             {/* Horaires */}
             {hours.length > 0 && (
@@ -467,7 +467,7 @@ export default function ListingDetail({ slug }: Props) {
           </div>
 
           {/* Sidebar */}
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 order-1 md:order-2">
 
             {/* Contact */}
             <div className="bg-white rounded-2xl border border-black/8 p-5">
