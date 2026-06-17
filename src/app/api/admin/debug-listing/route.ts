@@ -37,25 +37,47 @@ export async function POST(request: NextRequest) {
     .select("*")
     .eq("listing_id", lid);
 
-  // Try inserting a test media row
-  const { error: insertErr } = await supabase
+  // Test inserting a hours row
+  const { error: hoursInsertErr } = await supabase
+    .from("listing_hours")
+    .insert({ listing_id: lid, jour: "Lundi", ouvert: true, heure_ouverture: "09:00", heure_fermeture: "18:00" });
+
+  // Check listing_hours table columns
+  const { data: hoursSchema } = await supabase
+    .from("listing_hours")
+    .select("*")
+    .limit(1);
+
+  // Also check anon read access to media
+  const anonClient = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+  const { data: anonMedia, error: anonMediaErr } = await anonClient
     .from("listing_media")
-    .upsert({
-      listing_id: lid,
-      url: "https://images.unsplash.com/photo-1508807526345-15e9b5f4eaff?w=800&q=80",
-      type: "image",
-      position: 0
-    }, { onConflict: "listing_id,position" });
+    .select("*")
+    .eq("listing_id", lid);
+  const { data: anonHours, error: anonHoursErr } = await anonClient
+    .from("listing_hours")
+    .select("*")
+    .eq("listing_id", lid);
 
   return NextResponse.json({
     listing: { id: lid, nom: listing.nom },
-    mediaCount: media?.length ?? 0,
-    mediaError: me?.message ?? null,
-    hoursCount: hours?.length ?? 0,
-    hoursError: he?.message ?? null,
-    insertTestError: insertErr?.message ?? null,
-    mediaSample: media?.[0] ?? null,
-    hoursSample: hours?.[0] ?? null,
+    serviceRole: {
+      mediaCount: media?.length ?? 0,
+      mediaError: me?.message ?? null,
+      hoursCount: hours?.length ?? 0,
+      hoursError: he?.message ?? null,
+      hoursInsertError: hoursInsertErr?.message ?? null,
+      hoursInsertCode: hoursInsertErr?.code ?? null,
+    },
+    anonRole: {
+      mediaCount: anonMedia?.length ?? 0,
+      mediaError: anonMediaErr?.message ?? null,
+      hoursCount: anonHours?.length ?? 0,
+      hoursError: anonHoursErr?.message ?? null,
+    },
     usingKey: process.env.SUPABASE_SERVICE_ROLE_KEY ? "service_role" : "anon",
   });
 }
