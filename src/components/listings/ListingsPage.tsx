@@ -105,13 +105,13 @@ const DEMO_LISTINGS: Listing[] = [
 ];
 
 // ─── Card composants ─────────────────────────────────────────────
-function ListingCard({ l, onClick, isSelected }: { l: Listing; onClick?: () => void; isSelected?: boolean }) {
+function ListingCard({ l, isSelected }: { l: Listing; onClick?: () => void; isSelected?: boolean }) {
   const color = CAT_COLOR[l.category_nom?.toLowerCase() ?? ""] ?? l.category_couleur ?? "#F26522";
   const catSlug = Object.keys(CAT_COLOR).find((k) => l.category_nom?.toLowerCase().includes(k)) ?? "";
   return (
-    <div
-      onClick={onClick}
-      className={`bg-white rounded-2xl border-[1.5px] p-4 flex gap-3 cursor-pointer transition-all duration-200
+    <Link
+      href={`/listing/${l.slug}`}
+      className={`block bg-white rounded-2xl border-[1.5px] p-4 flex gap-3 transition-all duration-200
         ${l.plan === "premium" ? "border-amber-300" : "border-black/8"}
         ${isSelected ? "ring-2 ring-[#0D2461] shadow-lg" : "hover:shadow-lg hover:-translate-y-0.5"}
       `}
@@ -147,7 +147,7 @@ function ListingCard({ l, onClick, isSelected }: { l: Listing; onClick?: () => v
           {l.prix_label && <span className="text-[11px] font-extrabold text-[#F26522]">{l.prix_label}</span>}
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
 
@@ -408,7 +408,6 @@ export default function ListingsPage() {
                   key={l.id}
                   l={l}
                   isSelected={selectedId === l.id}
-                  onClick={() => setSelectedId(selectedId === l.id ? null : l.id)}
                 />
               ))
             )}
@@ -420,14 +419,14 @@ export default function ListingsPage() {
           <div className="flex-1 p-3" style={{ minHeight: 0 }}>
             <MapView
               pins={mapPins}
-              height="calc(100vh - 200px)"
+              height={view === "map" ? "calc(100vh - 185px)" : "calc(100vh - 200px)"}
               selectedId={selectedId}
               onPinClick={(pin) => setSelectedId(pin.id as string)}
             />
           </div>
 
-          {/* Popup listing sélectionné (desktop) */}
-          {selectedListing && view !== "map" && (
+          {/* Popup listing sélectionné */}
+          {selectedListing && (
             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[290px] bg-white rounded-2xl shadow-2xl border border-black/10 p-4 z-[1000]">
               <button onClick={() => setSelectedId(null)} className="absolute top-3 right-3 text-gray-400 hover:text-gray-600">
                 <X size={14} />
