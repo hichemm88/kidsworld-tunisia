@@ -18,6 +18,7 @@ import {
   ChevronRight,
   Zap,
   Mail,
+  DatabaseZap,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -50,6 +51,12 @@ const NAV_ITEMS = [
     items: [
       { href: "/admin/pages", label: "Pages & Contenu", icon: FileText },
       { href: "/admin/settings", label: "Paramètres", icon: Settings },
+    ],
+  },
+  {
+    group: "Outils",
+    items: [
+      { href: "/admin/scraper", label: "Import données", icon: DatabaseZap },
     ],
   },
 ];
