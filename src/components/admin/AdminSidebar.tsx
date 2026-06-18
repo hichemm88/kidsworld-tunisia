@@ -17,6 +17,7 @@ import {
   LogOut,
   ChevronRight,
   Zap,
+  Mail,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -41,6 +42,7 @@ const NAV_ITEMS = [
       { href: "/admin/packages", label: "Packages & Prix", icon: Package },
       { href: "/admin/promos", label: "Promotions", icon: Tag },
       { href: "/admin/payments", label: "Paiements", icon: CreditCard },
+      { href: "/admin/mailing", label: "Mailing", icon: Mail },
     ],
   },
   {
