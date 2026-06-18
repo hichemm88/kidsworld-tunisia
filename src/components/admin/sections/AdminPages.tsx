@@ -32,12 +32,12 @@ const PAGES: PageDef[] = [
       { key: "stats_listings", label: "Stat : nombre de listings", type: "text" },
       { key: "stats_cities", label: "Stat : nombre de villes", type: "text" },
       { key: "stats_label", label: "Stat : label principal", type: "text" },
-      { key: "how_title", label: "\"Comment ça marche\" — titre", type: "text" },
+      { key: "how_title", label: "Comment ca marche - titre", type: "text" },
     ],
   },
   {
     slug: "about",
-    title: "À propos",
+    title: "A propos",
     href: "/a-propos",
     sections: [
       { key: "title", label: "Titre", type: "text" },
@@ -53,13 +53,13 @@ const PAGES: PageDef[] = [
       { key: "title", label: "Titre", type: "text" },
       { key: "subtitle", label: "Sous-titre", type: "text" },
       { key: "email", label: "Email de contact", type: "text" },
-      { key: "phone", label: "Téléphone", type: "text" },
+      { key: "phone", label: "Telephone", type: "text" },
       { key: "address", label: "Adresse", type: "textarea" },
     ],
   },
   {
     slug: "cgu",
-    title: "Conditions générales",
+    title: "Conditions generales",
     href: "/cgu",
     sections: [
       { key: "title", label: "Titre", type: "text" },
@@ -68,7 +68,7 @@ const PAGES: PageDef[] = [
   },
   {
     slug: "privacy",
-    title: "Politique de confidentialité",
+    title: "Politique de confidentialite",
     href: "/confidentialite",
     sections: [
       { key: "title", label: "Titre", type: "text" },
@@ -140,15 +140,15 @@ export default function AdminPages() {
     return (
       <div>
         <div className="mb-6">
-          <h1 className="font-black text-[28px] text-[#0D2461] leading-none">Pages & Contenu</h1>
+          <h1 className="font-black text-[28px] text-[#0D2461] leading-none">Pages &amp; Contenu</h1>
         </div>
         <div className="bg-white rounded-2xl border border-red-200 p-6">
-          <p className="font-bold text-[15px] text-red-600 mb-2">⚠️ Table manquante</p>
+          <p className="font-bold text-[15px] text-red-600 mb-2">Table manquante</p>
           <p className="text-[13px] text-gray-600 mb-4">
-            Exécutez le SQL suivant dans l&apos;éditeur SQL de Supabase :
+            Executez ce SQL dans Supabase :
           </p>
           <pre className="bg-[#F7F6F2] rounded-xl p-4 text-[11px] font-mono text-gray-700 overflow-x-auto whitespace-pre-wrap">
-{`CREATE TABLE page_content (
+            {`CREATE TABLE page_content (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   page_slug TEXT NOT NULL,
   section_key TEXT NOT NULL,
@@ -159,6 +159,9 @@ export default function AdminPages() {
 ALTER TABLE page_content ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "admin_all" ON page_content USING (true) WITH CHECK (true);`}
           </pre>
+          <button onClick={load} className="mt-4 px-4 py-2 bg-[#0D2461] text-white rounded-xl text-[13px] font-bold hover:bg-[#1a3a8a] transition-all">
+            Reessayer
+          </button>
         </div>
       </div>
     );
@@ -166,67 +169,95 @@ CREATE POLICY "admin_all" ON page_content USING (true) WITH CHECK (true);`}
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="font-black text-[28px] text-[#0D2461] leading-none">Pages & Contenu</h1>
-        <p className="text-[13px] text-gray-500 mt-1">Éditez le contenu de chaque page du site</p>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="font-black text-[28px] text-[#0D2461] leading-none">Pages &amp; Contenu</h1>
+          <p className="text-gray-400 text-[13px] mt-1">Edition des textes de chaque page</p>
+        </div>
       </div>
+
       <div className="space-y-3">
-        {PAGES{map((page) => {
+        {PAGES.map((page) => {
           const isOpen = expandedPage === page.slug;
-          const isSavingPage = saving === page.slug;
-          const isSavedPage = saved === page.slug;
+          const isSaving = saving === page.slug;
+          const isSaved = saved === page.slug;
+
           return (
-            <div key={page.slug} className="bg-white rounded-2xl border border-gray-150 overflow-hidden">
-              {{/* Page header */}}
+            <div key={page.slug} className="bg-white rounded-2xl border border-black/8 overflow-hidden">
               <button
                 onClick={() => setExpandedPage(isOpen ? null : page.slug)}
-                className="w-full flex items-center justify-between p-5 hover:`��� transition"
+                className="w-full flex items-center gap-3 px-5 py-4 hover:bg-[#F7F6F2] transition-colors"
               >
-                <div className="flex items-center gap-3">
-                  <FileText size={16} className="text-[#0D2461]" />
-                  <div>
-                    <p className="font-semibold text-[14px] text-[#0D2461]">{page.title}</p>
-                    <p className="text-[12px] text-gray-400">{page.href} &mdash; {page.sections.length} sections</p>
-                  </div>
+                <div className="w-8 h-8 rounded-xl bg-[#0D2461]/8 flex items-center justify-center shrink-0">
+                  <FileText size={15} className="text-[#0D2461]" />
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="font-bold text-[14px] text-[#0D2461]">{page.title}</p>
+                  <p className="text-[11px] text-gray-400 font-mono">{page.href}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  {isSavedPage && <span className="text-[12px] text-green-600 font-medium">✓ Enregistré</span>}
-                  {isOpen ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+                  <span className="text-[11px] text-gray-400">{page.sections.length} sections</span>
+                  <a
+                    href={page.href}
+                    target="_blank"
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-7 h-7 rounded-lg bg-[#F7F6F2] flex items-center justify-center text-gray-400 hover:bg-[#0D2461] hover:text-white transition-all"
+                  >
+                    <Eye size={12} />
+                  </a>
+                  {isOpen ? <ChevronUp size={14} className="text-gray-400" /> : <ChevronDown size={14} className="text-gray-400" />}
                 </div>
               </button>
+
               {isOpen && (
-                <div className="border-t border-gray-100 p-5 space-y-4">
-                  {page.sections.map((section) => (
-                    <div key={section.key}>
-                      <label className="block text-[12px] font-semibold text-gray-600 mb-1">
-                        {section.label}
-                        <span className="ml-1 text-gray-350 font-normal">(+font-mono} {section.type}</span>
-                      </label>
-                      {section.type === "text" ? (
-                        <input
-                          value={content[key(page.slug, section.key)] || ""}
-                          onChange={e => updateField(page.slug, section.key, e.target.value)}
-                          className="width-full border border-gray-200 rounded-xl px-3 py-2 text-[13px]"
-                        />
-                      ) : (
-                        <textarea
-                          rows={section.type === "html" ? 8 : 3}
-                          value={content[key(page.slug, section.key)] || ""}
-                          onChange={e => updateField(page.slug, section.key, e.target.value)}
-                          className="width-full border border-gray-200 rounded-xl px-3 py-2 text-[13px] resize-y font-mono text-[12px]"
-                        />
-                      )}
-                    </div>
-                  ))}
-                  <div className="flex justify-end pt-2">
+                <div className="border-t border-black/6 px-5 py-4">
+                  <div className="space-y-4">
+                    {page.sections.map((section) => (
+                      <div key={section.key}>
+                        <label className="text-[11px] font-bold text-gray-500 uppercase mb-1.5 block">
+                          {section.label}
+                        </label>
+                        {section.type === "text" ? (
+                          <input
+                            type="text"
+                            value={content[key(page.slug, section.key)] || ""}
+                            onChange={(e) => updateField(page.slug, section.key, e.target.value)}
+                            className="w-full border border-black/12 rounded-xl px-3 py-2 text-[13px] outline-none focus:border-[#0D2461]/30"
+                          />
+                        ) : section.type === "textarea" ? (
+                          <textarea
+                            value={content[key(page.slug, section.key)] || ""}
+                            onChange={(e) => updateField(page.slug, section.key, e.target.value)}
+                            rows={3}
+                            className="w-full border border-black/12 rounded-xl px-3 py-2 text-[13px] outline-none focus:border-[#0D2461]/30 resize-none"
+                          />
+                        ) : (
+                          <div>
+                            <textarea
+                              value={content[key(page.slug, section.key)] || ""}
+                              onChange={(e) => updateField(page.slug, section.key, e.target.value)}
+                              rows={8}
+                              className="w-full border border-black/12 rounded-xl px-3 py-2 text-[12px] font-mono outline-none focus:border-[#0D2461]/30 resize-y"
+                            />
+                            <p className="text-[10px] text-gray-400 mt-1">HTML supporte</p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center gap-3 mt-5 pt-4 border-t border-black/6">
                     <button
                       onClick={() => savePage(page)}
-                      disabled={isSavingPage}
-                      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#0D2461] text-white text-[13px] font-semibold hover:opacity-90 transition disabled:opacity-50">
-                        {isSavingPage ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                        Enregistrer
-                      </button>
-                    </div>
+                      disabled={isSaving}
+                      className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-bold transition-all ${
+                        isSaved ? "bg-green-500 text-white" : "bg-[#0D2461] text-white hover:bg-[#1a3a8a]"
+                      } disabled:opacity-60`}
+                    >
+                      {isSaving ? <Loader2 size={13} className="animate-spin" /> : isSaved ? <Check size={13} /> : <Save size={13} />}
+                      {isSaved ? "Sauvegarde !" : isSaving ? "Sauvegarde..." : "Sauvegarder"}
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
