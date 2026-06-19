@@ -90,7 +90,7 @@ export default function Navbar() {
                       {[
                         { icon: <User size={14} />, label: "Mon profil", href: "/profil" },
                         { icon: <LayoutDashboard size={14} />, label: "Dashboard pro", href: "/dashboard" },
-                        { icon: <Heart size={14} />, label: "Mes favoris", href: "/profil" },
+                        { icon: <Heart size={14} />, label: "Mes favoris", href: "/favoris" },
                         { icon: <Plus size={14} />, label: "Ajouter un listing", href: "/dashboard/nouveau-listing" },
                       ].map((item, i) => (
                         <Link key={i} href={item.href} onClick={() => setUserMenuOpen(false)}
