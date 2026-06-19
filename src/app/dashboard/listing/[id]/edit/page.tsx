@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase-client";
 import Navbar from "@/components/layout/Navbar";
 import {
   Save, ArrowLeft, Info, Clock, DollarSign, Image, MapPin,
-  Plus, Trash2, Check, X, Loader2
+  Plus, Trash2, Check, X, Loader2, Upload
 } from "lucide-react";
 
 const DAYS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
@@ -61,7 +61,7 @@ export default function EditListingPage() {
   );
   const [tarifs, setTarifs] = useState<TarifRow[]>([{ label: "", prix: "", description: "" }]);
   const [photos, setPhotos] = useState<string[]>([]);
-  const [newPhotoUrl, setNewPhotoUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
   const [lat, setLat] = useState("");
   const [lng, setLng] = useState("");
   const [categories, setCategories] = useState<any[]>([]);
@@ -122,12 +122,14 @@ export default function EditListingPage() {
 
       const payload = {
         ...listing,
+        category_id: listing.category_id || null,
+        plan: "free" as const,
         lat: lat ? parseFloat(lat) : null,
         lng: lng ? parseFloat(lng) : null,
         owner_id: user.id,
         slug: listing.nom.toLowerCase()
-          .replace(/[àáâãä]/g, "a").replace(/[èéêë]/g, "e").replace(/[ìíîï]/g, "i")
-          .replace(/[òóôõö]/g, "o").replace(/[ùúûü]/g, "u").replace(/[ç]/g, "c")
+          .replace(/[Ã Ã¡Ã¢Ã£Ã¤]/g, "a").replace(/[Ã¨Ã©ÃªÃ«]/g, "e").replace(/[Ã¬Ã­Ã®Ã¯]/g, "i")
+          .replace(/[Ã²Ã³Ã´ÃµÃ¶]/g, "o").replace(/[Ã¹ÃºÃ»Ã¼]/g, "u").replace(/[Ã§]/g, "c")
           .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
       };
 
@@ -203,14 +205,14 @@ export default function EditListingPage() {
                   {isNew ? "Nouveau listing" : `Modifier : ${listing.nom || "..."}`}
                 </h1>
                 <p className="text-[12px] text-gray-400">
-                  {isNew ? "Créez votre fiche établissement" : "Modifiez les informations"}
+                  {isNew ? "CrÃ©ez votre fiche Ã©tablissement" : "Modifiez les informations"}
                 </p>
               </div>
             </div>
             <button onClick={saveAll} disabled={saving}
               className="flex items-center gap-2 bg-[#F26522] text-white font-bold text-[13px] px-5 py-2.5 rounded-xl hover:bg-[#FF8C4B] disabled:opacity-60 transition-all">
               {saving ? <Loader2 size={14} className="animate-spin" /> : saved ? <Check size={14} /> : <Save size={14} />}
-              {saving ? "Enregistrement..." : saved ? "Enregistré !" : "Enregistrer"}
+              {saving ? "Enregistrement..." : saved ? "EnregistrÃ© !" : "Enregistrer"}
             </button>
           </div>
 
@@ -228,20 +230,20 @@ export default function EditListingPage() {
 
           <div className="bg-white rounded-2xl border border-black/8 p-6">
 
-            {/* Infos générales */}
+            {/* Infos gÃ©nÃ©rales */}
             {tab === "infos" && (
               <div className="flex flex-col gap-5">
                 <div>
-                  <label className="text-[12px] font-bold text-gray-500 mb-1.5 block">Nom de l&apos;établissement *</label>
+                  <label className="text-[12px] font-bold text-gray-500 mb-1.5 block">Nom de l&apos;Ã©tablissement *</label>
                   <input type="text" value={listing.nom} onChange={(e) => setListing((l) => ({ ...l, nom: e.target.value }))}
                     placeholder="Ex: Jumpark Trampoline Tunis"
                     className="w-full border border-black/12 rounded-xl px-3 py-2.5 text-[14px] outline-none focus:border-[#0D2461]/50" />
                 </div>
                 <div>
-                  <label className="text-[12px] font-bold text-gray-500 mb-1.5 block">Catégorie</label>
+                  <label className="text-[12px] font-bold text-gray-500 mb-1.5 block">CatÃ©gorie</label>
                   <select value={listing.category_id} onChange={(e) => setListing((l) => ({ ...l, category_id: e.target.value }))}
                     className="w-full border border-black/12 rounded-xl px-3 py-2.5 text-[14px] outline-none focus:border-[#0D2461]/50 bg-white">
-                    <option value="">Choisir une catégorie</option>
+                    <option value="">Choisir une catÃ©gorie</option>
                     {categories.map((c) => (
                       <option key={c.id} value={c.id}>{c.emoji} {c.nom}</option>
                     ))}
@@ -250,7 +252,7 @@ export default function EditListingPage() {
                 <div>
                   <label className="text-[12px] font-bold text-gray-500 mb-1.5 block">Description</label>
                   <textarea value={listing.description} onChange={(e) => setListing((l) => ({ ...l, description: e.target.value }))}
-                    rows={5} placeholder="Décrivez votre établissement..."
+                    rows={5} placeholder="DÃ©crivez votre Ã©tablissement..."
                     className="w-full border border-black/12 rounded-xl px-3 py-2.5 text-[14px] outline-none focus:border-[#0D2461]/50 resize-none" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -265,14 +267,14 @@ export default function EditListingPage() {
                       placeholder="Ex: Les Berges du Lac"
                       className="w-full border border-black/12 rounded-xl px-3 py-2.5 text-[14px] outline-none focus:border-[#0D2461]/50" />
                   </div>
-                </div>
+                   </div>
                 <div className="flex items-center gap-3 p-3 bg-[#F7F6F2] rounded-xl">
                   <div className={`w-10 h-6 rounded-full transition-colors relative cursor-pointer ${listing.is_active ? "bg-green-500" : "bg-gray-300"}`}
                     onClick={() => setListing((l) => ({ ...l, is_active: !l.is_active }))}>
                     <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-all ${listing.is_active ? "left-4" : "left-0.5"}`} />
                   </div>
                   <span className="text-[13px] font-semibold text-gray-700">
-                    {listing.is_active ? "Listing actif et visible" : "Listing masqué"}
+                    {listing.is_active ? "Listing actif et visible" : "Listing masquÃ©"}
                   </span>
                 </div>
               </div>
@@ -281,7 +283,7 @@ export default function EditListingPage() {
             {/* Horaires */}
             {tab === "horaires" && (
               <div className="flex flex-col gap-3">
-                <p className="text-[13px] text-gray-500 mb-2">Définissez les jours et heures d&apos;ouverture</p>
+                <p className="text-[13px] text-gray-500 mb-2">DÃ©finissez les jours et heures d&apos;ouverture</p>
                 {horaires.map((h, i) => (
                   <div key={h.jour} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${h.ouvert ? "border-[#0D2461]/20 bg-[#F7F6F2]" : "border-black/8"}`}>
                     <div className={`w-8 h-5 rounded-full relative cursor-pointer transition-colors ${h.ouvert ? "bg-[#0D2461]" : "bg-gray-200"}`}
@@ -294,13 +296,13 @@ export default function EditListingPage() {
                         <input type="time" value={h.heure_ouverture}
                           onChange={(e) => setHoraires((hrs) => hrs.map((x, j) => j === i ? { ...x, heure_ouverture: e.target.value } : x))}
                           className="border border-black/12 rounded-lg px-2 py-1.5 text-[13px] outline-none focus:border-[#0D2461]/50" />
-                        <span className="text-gray-400 text-[12px]">→</span>
+                        <span className="text-gray-400 text-[12px]">â</span>
                         <input type="time" value={h.heure_fermeture}
                           onChange={(e) => setHoraires((hrs) => hrs.map((x, j) => j === i ? { ...x, heure_fermeture: e.target.value } : x))}
                           className="border border-black/12 rounded-lg px-2 py-1.5 text-[13px] outline-none focus:border-[#0D2461]/50" />
                       </div>
                     ) : (
-                      <span className="text-[12px] text-gray-400 flex-1">Fermé</span>
+                      <span className="text-[12px] text-gray-400 flex-1">FermÃ©</span>
                     )}
                   </div>
                 ))}
@@ -310,12 +312,12 @@ export default function EditListingPage() {
             {/* Tarifs */}
             {tab === "tarifs" && (
               <div className="flex flex-col gap-4">
-                <p className="text-[13px] text-gray-500">Ajoutez vos tarifs (entrée, abonnement, cours...)</p>
+                <p className="text-[13px] text-gray-500">Ajoutez vos tarifs (entrÃ©e, abonnement, cours...)</p>
                 {tarifs.map((t, i) => (
                   <div key={i} className="flex gap-2 items-start p-3 bg-[#F7F6F2] rounded-xl border border-black/8">
                     <div className="flex-1 flex flex-col gap-2">
                       <div className="grid grid-cols-2 gap-2">
-                        <input type="text" value={t.label} placeholder="Ex: Entrée enfant"
+                        <input type="text" value={t.label} placeholder="Ex: EntrÃ©e enfant"
                           onChange={(e) => setTarifs((ts) => ts.map((x, j) => j === i ? { ...x, label: e.target.value } : x))}
                           className="border border-black/12 rounded-lg px-2.5 py-2 text-[13px] outline-none focus:border-[#0D2461]/50 bg-white" />
                         <input type="number" value={t.prix} placeholder="Prix (TND)"
@@ -342,27 +344,47 @@ export default function EditListingPage() {
             {/* Photos */}
             {tab === "photos" && (
               <div className="flex flex-col gap-4">
-                <p className="text-[13px] text-gray-500">Ajoutez des photos de votre établissement (URLs)</p>
-                <div className="flex gap-2">
-                  <input type="url" value={newPhotoUrl} onChange={(e) => setNewPhotoUrl(e.target.value)}
-                    placeholder="https://exemple.com/photo.jpg"
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && newPhotoUrl.trim()) {
-                        setPhotos((p) => [...p, newPhotoUrl.trim()]);
-                        setNewPhotoUrl("");
+                <p className="text-[13px] text-gray-500">Importez des photos depuis votre appareil (JPG, PNG, WebP â max 5 Mo chacune)</p>
+
+                {/* Upload zone */}
+                <label className={`flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-xl p-6 cursor-pointer transition-all ${uploading ? "border-[#0D2461]/40 bg-[#F7F6F2]" : "border-black/12 hover:border-[#0D2461]/40 hover:bg-[#F7F6F2]"}`}>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    className="hidden"
+                    disabled={uploading}
+                    onChange={async (e) => {
+                      const files = Array.from(e.target.files || []);
+                      if (!files.length) return;
+                      setUploading(true);
+                      try {
+                        const urls: string[] = [];
+                        for (const file of files) {
+                          const fd = new FormData();
+                          fd.append("file", file);
+                          const res = await fetch("/api/upload", { method: "POST", body: fd });
+                          const data = await res.json();
+                          if (data.url) urls.push(data.url);
+                          else alert(`Erreur upload ${file.name}: ${data.error}`);
+                        }
+                        setPhotos((p) => [...p, ...urls]);
+                      } finally {
+                        setUploading(false);
+                        e.target.value = "";
                       }
                     }}
-                    className="flex-1 border border-black/12 rounded-xl px-3 py-2.5 text-[13px] outline-none focus:border-[#0D2461]/50" />
-                  <button onClick={() => { if (newPhotoUrl.trim()) { setPhotos((p) => [...p, newPhotoUrl.trim()]); setNewPhotoUrl(""); } }}
-                    className="bg-[#0D2461] text-white px-4 py-2.5 rounded-xl text-[13px] font-bold hover:bg-[#1a3a8a] transition-all flex items-center gap-1.5">
-                    <Plus size={14} /> Ajouter
-                  </button>
-                </div>
+                  />
+                  {uploading ? (
+                    <><Loader2 size={22} className="animate-spin text-[#0D2461]" /><span className="text-[13px] text-[#0D2461] font-semibold">Upload en cours...</span></>
+                  ) : (
+                    <><Upload size={22} className="text-gray-400" /><span className="text-[13px] text-gray-500 font-semibold">Cliquez pour importer des photos</span><span className="text-[11px] text-gray-400">ou glissez-dÃ©posez ici</span></>
+                  )}
+                </label>
+
+                {/* Grid */}
                 {photos.length === 0 ? (
-                  <div className="border-2 border-dashed border-black/12 rounded-xl p-8 text-center text-gray-400">
-                    <div className="text-3xl mb-2">📸</div>
-                    <p className="text-[13px]">Aucune photo ajoutée</p>
-                  </div>
+                  <div className="text-center text-[12px] text-gray-400 py-2">Aucune photo ajoutÃ©e</div>
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     {photos.map((url, i) => (
@@ -372,6 +394,7 @@ export default function EditListingPage() {
                           className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                           <X size={11} />
                         </button>
+                        <div className="absolute bottom-1.5 left-1.5 bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded-md font-mono">{i + 1}</div>
                       </div>
                     ))}
                   </div>
@@ -383,7 +406,7 @@ export default function EditListingPage() {
             {tab === "gps" && (
               <div className="flex flex-col gap-5">
                 <div>
-                  <label className="text-[12px] font-bold text-gray-500 mb-1.5 block">Téléphone</label>
+                  <label className="text-[12px] font-bold text-gray-500 mb-1.5 block">TÃ©lÃ©phone</label>
                   <input type="tel" value={listing.phone} onChange={(e) => setListing((l) => ({ ...l, phone: e.target.value }))}
                     placeholder="+216 XX XXX XXX"
                     className="w-full border border-black/12 rounded-xl px-3 py-2.5 text-[14px] outline-none focus:border-[#0D2461]/50" />
@@ -401,7 +424,7 @@ export default function EditListingPage() {
                     className="w-full border border-black/12 rounded-xl px-3 py-2.5 text-[14px] outline-none focus:border-[#0D2461]/50" />
                 </div>
                 <div>
-                  <label className="text-[12px] font-bold text-gray-500 mb-1.5 block">Adresse complète</label>
+                  <label className="text-[12px] font-bold text-gray-500 mb-1.5 block">Adresse complÃ¨te</label>
                   <input type="text" value={listing.adresse} onChange={(e) => setListing((l) => ({ ...l, adresse: e.target.value }))}
                     placeholder="Ex: Rue de Marseille, Les Berges du Lac II"
                     className="w-full border border-black/12 rounded-xl px-3 py-2.5 text-[14px] outline-none focus:border-[#0D2461]/50" />
@@ -421,7 +444,7 @@ export default function EditListingPage() {
                   </div>
                 </div>
                 <div className="bg-[#F7F6F2] rounded-xl p-3 text-[12px] text-gray-500">
-                  💡 Pour obtenir les coordonnées GPS : ouvrez Google Maps, cliquez sur votre adresse, et notez les coordonnées affichées.
+                  ð¡ Pour obtenir les coordonnÃ©es GPS : ouvrez Google Maps, cliquez sur votre adresse, et notez les coordonnÃ©es affichÃ©es.
                 </div>
               </div>
             )}
@@ -431,7 +454,7 @@ export default function EditListingPage() {
           <button onClick={saveAll} disabled={saving}
             className="w-full mt-4 flex items-center justify-center gap-2 bg-[#0D2461] text-white font-bold text-[14px] py-3.5 rounded-2xl hover:bg-[#1a3a8a] disabled:opacity-60 transition-all">
             {saving ? <Loader2 size={16} className="animate-spin" /> : saved ? <Check size={16} /> : <Save size={16} />}
-            {saving ? "Enregistrement en cours..." : saved ? "Enregistré avec succès !" : "Enregistrer toutes les modifications"}
+            {saving ? "Enregistrement en cours..." : saved ? "EnregistrÃ© avec succÃ¨s !" : "Enregistrer toutes les modifications"}
           </button>
         </div>
       </div>
