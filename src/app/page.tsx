@@ -3,6 +3,7 @@ import Hero from "@/components/home/Hero";
 import StatsBar from "@/components/home/StatsBar";
 import CategoriesGrid from "@/components/home/CategoriesGrid";
 import FeaturedListings from "@/components/home/FeaturedListings";
+import VillesGrid from "@/components/home/VillesGrid";
 
 export default function HomePage() {
   return (
@@ -12,6 +13,7 @@ export default function HomePage() {
         <Hero />
         <StatsBar />
         <CategoriesGrid />
+        <VillesGrid />
         <FeaturedListings />
       </main>
     </>
