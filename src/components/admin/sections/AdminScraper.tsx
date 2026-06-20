@@ -361,15 +361,15 @@ export default function AdminScraper() {
             <div className="text-sm text-blue-700 space-y-1">
               <p className="font-semibold">Source : OpenStreetMap via Overpass API</p>
               <ul className="text-blue-600 space-y-0.5 list-disc list-inside text-xs">
-                <li>Aucune clé API requise — 100% gratuit</li>
-                <li>Nom officiel, adresse, coordonnées GPS</li>
-                <li>Numéro de téléphone (null si absent dans OSM)</li>
+                <li>Aucune cle API requise — 100% gratuit</li>
+                <li>Nom officiel, adresse, coordonnees GPS</li>
+                <li>Numero de telephone (null si absent dans OSM)</li>
                 <li>Site web quand disponible</li>
-                <li>Horaires d&apos;ouverture (7 jours) si renseignés dans OSM</li>
-                <li>Doublons automatiquement ignorés</li>
+                <li>Horaires d&apos;ouverture (7 jours) si renseignes dans OSM</li>
+                <li>Doublons automatiquement ignores</li>
               </ul>
               <p className="text-xs text-blue-500 mt-2">
-                Astuce : Lancez plusieurs fois avec différentes catégories pour enrichir la base.
+                Astuce : Lancez plusieurs fois avec differentes categories pour enrichir la base.
               </p>
             </div>
           </div>
