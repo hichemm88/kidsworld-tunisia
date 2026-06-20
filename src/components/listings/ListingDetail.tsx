@@ -547,7 +547,7 @@ export default function ListingDetail({ slug }: Props) {
                   rel="noopener noreferrer"
                   className="mt-3 flex items-center justify-center gap-2 w-full py-2.5 bg-[#4285F4] hover:bg-[#3367D6] text-white font-bold text-[13px] rounded-xl transition-all"
                 >
-                  <Navigation size={14} /> Obtenir l&apos;itinéraire
+                  <Navigation size={14} /> Obtenir l&apos;itineraire
                 </a>
               </div>
             )}
@@ -560,7 +560,7 @@ export default function ListingDetail({ slug }: Props) {
                   : "bg-white text-gray-600 border-black/12 hover:border-red-200 hover:text-red-400"
               }`}>
               <Heart size={15} className={isFav ? "fill-red-500" : ""} />
-              {isFav ? "Retiré des favoris" : "Ajouter aux favoris"}
+              {isFav ? "Retire des favoris" : "Ajouter aux favoris"}
             </button>
           </div>
         </div>
@@ -568,4 +568,3 @@ export default function ListingDetail({ slug }: Props) {
     </div>
   );
 }
-            

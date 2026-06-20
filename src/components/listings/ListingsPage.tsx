@@ -563,14 +563,14 @@ export default function ListingsPage() {
                 href={`/listing/${selectedListing.slug}`}
                 className="block w-full text-center bg-[#0D2461] text-white text-[12px] font-bold py-2.5 rounded-xl hover:bg-[#1A3A8F] transition-colors"
               >
-                Voir la fiche complète →
+                Voir la fiche complete
               </Link>
             </div>
           )}
         </div>
       </div>
 
-      {/* ── Filter drawer ── */}
+      {/* Filter drawer */}
       {filterOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-50 flex items-end md:items-center justify-center"
@@ -579,67 +579,35 @@ export default function ListingsPage() {
           <div className="bg-white w-full max-w-lg rounded-t-2xl md:rounded-2xl p-5 pb-8 max-h-[85vh] overflow-y-auto shadow-2xl">
             <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-4 md:hidden" />
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-[17px] font-extrabold text-[#111827]">Filtrer les résultats</h3>
+              <h3 className="text-[17px] font-extrabold text-[#111827]">Filtrer les resultats</h3>
               <button onClick={() => setFilterOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
                 <X size={20} />
               </button>
             </div>
 
-            <div className="space-y-6">
-              {/* Age */}
-              <div>
-                <p className="text-[12px] font-extrabold text-[#111827] uppercase tracking-wide mb-3">Tranche d&apos;âge</p>
-                <div className="flex flex-wrap gap-2">
-                  {AGE_RANGES.map((a) => (
-                    <FilterChip
-                      key={a.label}
-                      label={a.label}
-                      active={activeAgeRange?.min === a.min && activeAgeRange?.max === a.max}
-                      onClick={() => setActiveAgeRange(
-                        activeAgeRange?.min === a.min ? null : { min: a.min, max: a.max }
-                      )}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {/* Ville */}
-              <div>
-                <p className="text-[12px] font-extrabold text-[#111827] uppercase tracking-wide mb-3">Ville / Quartier</p>
-                <div className="flex flex-wrap gap-2">
-                  {VILLES.map((v) => (
-                    <FilterChip
-                      key={v}
-                      label={v}
-                      active={activeVille === v}
-                      onClick={() => setActiveVille(activeVille === v ? "all" : v)}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {/* Options */}
+            <div className="space-y-5">
               <div>
                 <p className="text-[12px] font-extrabold text-[#111827] uppercase tracking-wide mb-3">Options</p>
                 <div className="flex flex-wrap gap-2">
-                  <FilterChip label="Vérifié ✓" active={onlyVerified} onClick={() => setOnlyVerified(!onlyVerified)} />
-                  <FilterChip label="⭐ Premium" active={onlyPremium} onClick={() => setOnlyPremium(!onlyPremium)} />
+                  {["Verifie", "Premium", "Parking", "Bilingue"].map((o) => (
+                    <button key={o} className="text-[12px] font-bold px-3 py-1.5 rounded-full border border-black/15 hover:border-[#F26522] hover:text-[#F26522] transition-all">{o}</button>
+                  ))}
                 </div>
               </div>
             </div>
 
             <div className="flex gap-3 mt-8">
               <button
-                onClick={resetFilters}
+                onClick={() => { setActiveCat("all"); setActiveVille("all"); setSearchQuery(""); setFilterOpen(false); }}
                 className="flex-1 border-2 border-black/15 text-[13px] font-bold py-3 rounded-xl hover:border-[#F26522] hover:text-[#F26522] transition-all"
               >
-                Réinitialiser
+                Reinitialiser
               </button>
               <button
                 onClick={() => setFilterOpen(false)}
                 className="flex-1 bg-[#F26522] text-white text-[13px] font-bold py-3 rounded-xl hover:bg-[#FF8C4B] transition-all shadow-sm"
               >
-                Voir {sorted.length} résultat{sorted.length !== 1 ? "s" : ""}
+                Voir {sorted.length} resultats
               </button>
             </div>
           </div>
