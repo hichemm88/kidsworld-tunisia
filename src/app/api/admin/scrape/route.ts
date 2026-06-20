@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-const OVERPASS_URL = "https://overpass-api.de/api/interpreter";
+const OVERPASS_MIRRORS = [
+  "https://overpass-api.de/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter",
+  "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+  "https://overpass.openstreetmap.ru/api/interpreter",
+];
 
 const CITY_COORDS: Record<string, { lat: number; lng: number; radius: number }> = {
   "Tunis":    { lat: 36.8190, lng: 10.1658, radius: 12000 },
@@ -58,68 +63,123 @@ function slugify(text: string): string {
   return text.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9\s-]/g,"").replace(/\s+/g,"-").replace(/-+/g,"-").trim().substring(0,70);
 }
 
+async function fetchOverpass(query: string): Promise<any[]> {
+  const UA = "KidsWorldTunisia/1.0 (hichemmathlouthi@gmail.com)";
+  const errors: string[] = [];
+  for (const url of OVERPASS_MIRRORS) {
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "User-Agent": UA,
+          "Accept": "application/json",
+        },
+        body: `data=${encodeURIComponent(query)}`,
+        signal: AbortSignal.timeout(40000),
+      });
+      if (!res.ok) {
+        errors.push(`${url}: HTTP ${res.status}`);
+        continue;
+      }
+      const json = await res.json();
+      return json.elements || [];
+    } catch(e: any) {
+      errors.push(`${url}: ${e.message}`);
+    }
+  }
+  throw new Error(`All mirrors failed: ${errors.join(" | ")}`);
+}
+
 export async function GET() {
-  return NextResponse.json({status:"ok",source:"OpenStreetMap / Overpass API",note:"POST {category,city,count}",cities:Object.keys(CITY_COORDS),categories:Object.keys(CATEGORY_OSM)});
+  return NextResponse.json({
+    status: "ok",
+    source: "OpenStreetMap / Overpass API",
+    note: "POST {category, city, count}",
+    cities: Object.keys(CITY_COORDS),
+    categories: Object.keys(CATEGORY_OSM),
+    mirrors: OVERPASS_MIRRORS.length,
+  });
 }
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const category: string = body.category||"loisirs";
-  const city: string = body.city||"Tunis";
-  const count: number = Math.min(Number(body.count)||20,100);
+  const category: string = body.category || "loisirs";
+  const city: string = body.city || "Tunis";
+  const count: number = Math.min(Number(body.count) || 20, 100);
 
   const coords = CITY_COORDS[city];
-  if (!coords) return NextResponse.json({error:`Ville "${city}" non supportee.`},{status:400});
+  if (!coords) return NextResponse.json({ error: `Ville "${city}" non supportee.` }, { status: 400 });
   const osmTags = CATEGORY_OSM[category];
-  if (!osmTags) return NextResponse.json({error:`Categorie "${category}" inconnue.`},{status:400});
+  if (!osmTags) return NextResponse.json({ error: `Categorie "${category}" inconnue.` }, { status: 400 });
 
-  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!,process.env.SUPABASE_SERVICE_ROLE_KEY!);
-  const {data:catData} = await supabase.from("categories").select("id").eq("slug",category).single();
-  const categoryId = catData?.id??null;
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+  const { data: catData } = await supabase.from("categories").select("id").eq("slug", category).single();
+  const categoryId = catData?.id ?? null;
 
-  const query = buildOverpassQuery(osmTags,coords.lat,coords.lng,coords.radius,count*4);
+  const query = buildOverpassQuery(osmTags, coords.lat, coords.lng, coords.radius, count * 4);
   let elements: any[] = [];
   try {
-    const res = await fetch(OVERPASS_URL,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:`data=${encodeURIComponent(query)}`,signal:AbortSignal.timeout(35000)});
-    if (!res.ok) throw new Error(`Overpass HTTP ${res.status}`);
-    elements = (await res.json()).elements||[];
-  } catch(e:any) {
-    return NextResponse.json({error:`Erreur Overpass: ${e.message}`},{status:500});
+    elements = await fetchOverpass(query);
+  } catch(e: any) {
+    return NextResponse.json({ error: `Erreur Overpass: ${e.message}` }, { status: 500 });
   }
 
   const seen = new Set<string>();
-  const unique = elements.filter(el=>{
-    const n=el.tags?.name||el.tags?.["name:fr"]||el.tags?.["name:ar"];
+  const unique = elements.filter(el => {
+    const n = el.tags?.name || el.tags?.["name:fr"] || el.tags?.["name:ar"];
     if (!n) return false;
-    const k=n.toLowerCase().trim();
+    const k = n.toLowerCase().trim();
     if (seen.has(k)) return false;
-    seen.add(k);return true;
+    seen.add(k);
+    return true;
   });
 
-  const {data:existingData} = await supabase.from("listings").select("nom");
-  const existingNoms = new Set((existingData||[]).map((l:any)=>l.nom.toLowerCase().trim()));
-  const inserted:any[]=[],skipped:string[]=[],errors:string[]=[];
+  const { data: existingData } = await supabase.from("listings").select("nom");
+  const existingNoms = new Set((existingData || []).map((l: any) => l.nom.toLowerCase().trim()));
+  const inserted: any[] = [], skipped: string[] = [], errors: string[] = [];
 
-  for (const el of unique.slice(0,count)) {
+  for (const el of unique.slice(0, count)) {
     try {
-      const tags=el.tags||{};
-      const name:string=tags.name||tags["name:fr"]||tags["name:ar"]||"";
+      const tags = el.tags || {};
+      const name: string = tags.name || tags["name:fr"] || tags["name:ar"] || "";
       if (!name) continue;
-      if (existingNoms.has(name.toLowerCase().trim())){skipped.push(name);continue;}
-      const lat:number|null=el.lat??el.center?.lat??null;
-      const lng:number|null=el.lon??el.center?.lon??null;
-      const phone=cleanPhone(tags.phone||tags["contact:phone"]||tags["contact:mobile"]);
-      const website:string|null=tags.website||tags["contact:website"]||null;
-      const adresse:string|null=[tags["addr:housenumber"],tags["addr:street"],tags["addr:suburb"]].filter(Boolean).join(" ")||tags["addr:full"]||null;
-      const slug=`${slugify(`${name} ${city}`)}-${Math.random().toString(36).slice(2,5)}`;
-      const {data:listing,error:lErr}=await supabase.from("listings").insert({slug,nom:name,description:tags.description||null,category_id:categoryId,ville:city,adresse,lat,lng,phone,website,email:null,plan:"free",is_verified:false,is_active:true}).select("id").single();
-      if (lErr||!listing){errors.push(`${name}: ${lErr?.message??"echec"}`);continue;}
+      if (existingNoms.has(name.toLowerCase().trim())) { skipped.push(name); continue; }
+      const lat: number | null = el.lat ?? el.center?.lat ?? null;
+      const lng: number | null = el.lon ?? el.center?.lon ?? null;
+      const phone = cleanPhone(tags.phone || tags["contact:phone"] || tags["contact:mobile"]);
+      const website: string | null = tags.website || tags["contact:website"] || null;
+      const adresse: string | null = [tags["addr:housenumber"], tags["addr:street"], tags["addr:suburb"]].filter(Boolean).join(" ") || tags["addr:full"] || null;
+      const slug = `${slugify(`${name} ${city}`)}-${Math.random().toString(36).slice(2, 5)}`;
+      const { data: listing, error: lErr } = await supabase.from("listings").insert({
+        slug, nom: name,
+        description: tags.description || null,
+        category_id: categoryId,
+        ville: city, adresse, lat, lng,
+        phone, website, email: null,
+        plan: "free", is_verified: false, is_active: true,
+      }).select("id").single();
+      if (lErr || !listing) { errors.push(`${name}: ${lErr?.message ?? "echec"}`); continue; }
       existingNoms.add(name.toLowerCase().trim());
-      let hasHours=false;
-      if (tags.opening_hours){const hrs=parseOsmHours(tags.opening_hours);if(hrs?.length){await supabase.from("listing_hours").insert(hrs.map(h=>({listing_id:listing.id,...h})));hasHours=true;}}
-      inserted.push({id:listing.id,nom:name,slug,adresse,phone,website,hasHours,lat,lng});
-    } catch(e:any){errors.push(`Erreur: ${e.message}`);}
+      if (tags.opening_hours) {
+        const hrs = parseOsmHours(tags.opening_hours);
+        if (hrs?.length) {
+          await supabase.from("listing_hours").insert(hrs.map(h => ({ listing_id: listing.id, ...h })));
+        }
+      }
+      inserted.push({ id: listing.id, nom: name, slug, adresse, phone, website, hasHours: !!tags.opening_hours, lat, lng });
+    } catch(e: any) { errors.push(`Erreur: ${e.message}`); }
   }
 
-  return NextResponse.json({inserted,skipped,errors,total:inserted.length,total_found:unique.length,skipped_count:skipped.length,requested:count,source:"OpenStreetMap / Overpass"});
+  return NextResponse.json({
+    inserted, skipped, errors,
+    total: inserted.length,
+    total_found: unique.length,
+    skipped_count: skipped.length,
+    requested: count,
+    source: "OpenStreetMap / Overpass",
+  });
 }
