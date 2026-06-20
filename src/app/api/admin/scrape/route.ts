@@ -34,9 +34,9 @@ const CATEGORY_OSM: Record<string, Array<[string, string]>> = {
   shopping:  [["shop","toys"],["shop","baby_goods"],["shop","children"],["shop","clothes"],["shop","books"],["shop","sports"]],
 };
 
-function buildOverpassQuery(tags: Array<[string,string]>, lat: number, lng: number, radius: number, limit: number): string {
+function buildOverpassQuery(tags: Array<[string,string]>, lat: number, lng: number, radius: number): string {
   const parts = tags.map(([k,v]) => `  node["${k}"="${v}"](around:${radius},${lat},${lng});\n  way["${k}"="${v}"](around:${radius},${lat},${lng});\n`).join("");
-  return `[out:json][timeout:30];\n(\n${parts});\nout center ${limit};`;
+  return `[out:json][timeout:30];\n(\n${parts});\nout center 500;`;
 }
 
 function parseOsmHours(oh: string): Array<{day_of_week:number;open_time:string|null;close_time:string|null;is_closed:boolean}>|null {
@@ -78,10 +78,7 @@ async function fetchOverpass(query: string): Promise<any[]> {
         body: `data=${encodeURIComponent(query)}`,
         signal: AbortSignal.timeout(40000),
       });
-      if (!res.ok) {
-        errors.push(`${url}: HTTP ${res.status}`);
-        continue;
-      }
+      if (!res.ok) { errors.push(`${url}: HTTP ${res.status}`); continue; }
       const json = await res.json();
       return json.elements || [];
     } catch(e: any) {
@@ -120,7 +117,8 @@ export async function POST(req: NextRequest) {
   const { data: catData } = await supabase.from("categories").select("id").eq("slug", category).single();
   const categoryId = catData?.id ?? null;
 
-  const query = buildOverpassQuery(osmTags, coords.lat, coords.lng, coords.radius, count * 4);
+  // Fetch ALL available elements (up to 500), deduplicate by name
+  const query = buildOverpassQuery(osmTags, coords.lat, coords.lng, coords.radius);
   let elements: any[] = [];
   try {
     elements = await fetchOverpass(query);
@@ -138,11 +136,15 @@ export async function POST(req: NextRequest) {
     return true;
   });
 
+  // Load existing names to skip duplicates
   const { data: existingData } = await supabase.from("listings").select("nom");
   const existingNoms = new Set((existingData || []).map((l: any) => l.nom.toLowerCase().trim()));
+
   const inserted: any[] = [], skipped: string[] = [], errors: string[] = [];
 
-  for (const el of unique.slice(0, count)) {
+  // Iterate ALL unique results — stop when we've inserted `count` new listings
+  for (const el of unique) {
+    if (inserted.length >= count) break;
     try {
       const tags = el.tags || {};
       const name: string = tags.name || tags["name:fr"] || tags["name:ar"] || "";
