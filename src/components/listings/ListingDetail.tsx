@@ -9,6 +9,7 @@ import {
   ArrowLeft, Heart, Share2, Star, MapPin, Clock, Phone, Globe,
   ChevronDown, ChevronUp, Crown, CheckCircle, Loader2,
   Navigation, Images, Building2, Zap, BookOpen, Palette, Gift, ShoppingBag,
+  MessageCircle, Copy, Check,
 } from "lucide-react";
 
 const CAT_ICONS: Record<string, { Icon: React.ComponentType<any>; color: string }> = {
@@ -56,6 +57,8 @@ export default function ListingDetail({ slug }: Props) {
   const [media, setMedia] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+  const [shareMenuOpen, setShareMenuOpen] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
   const [isFav, setIsFav] = useState(false);
   const [favId, setFavId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -76,9 +79,9 @@ export default function ListingDetail({ slug }: Props) {
       setUser(userRes.data.user);
 
       const [hoursRes, pricesRes, mediaRes, reviewsRes] = await Promise.all([
-        supabase.from("listing_hours").select("*").eq("listing_id", l.id).order("jour"),
+        supabase.from("listing_hours").select("*").eq("listing_id", l.id).order("day_of_week"),
         supabase.from("listing_prices").select("*").eq("listing_id", l.id),
-        supabase.from("listing_media").select("*").eq("listing_id", l.id).eq("type", "image").order("position"),
+        supabase.from("listing_media").select("*").eq("listing_id", l.id).eq("type", "image").order("ordre"),
         supabase.from("reviews").select("*, user:profiles(full_name)").eq("listing_id", l.id).order("created_at", { ascending: false }).limit(10),
       ]);
 
@@ -129,14 +132,24 @@ export default function ListingDetail({ slug }: Props) {
     setSubmittingReview(false);
   };
 
-  const share = () => {
-    if (navigator.share) {
-      navigator.share({ title: listing?.nom, url: window.location.href });
-    } else {
-      navigator.clipboard.writeText(window.location.href);
-      alert("Lien copié !");
-    }
+  const shareUrl = typeof window !== "undefined" ? window.location.href : "";
+  const shareWhatsApp = () => {
+    window.open(`https://wa.me/?text=${encodeURIComponent((listing?.nom ?? "") + " — " + shareUrl)}`, "_blank");
+    setShareMenuOpen(false);
   };
+  const shareFacebook = () => {
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, "_blank");
+    setShareMenuOpen(false);
+  };
+  const copyLink = async () => {
+    await navigator.clipboard.writeText(shareUrl);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+    setShareMenuOpen(false);
+  };
+
+  // Map DB day_of_week (0=Sun,1=Mon…) to French day names
+  const DOW_TO_FR = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
 
   if (loading) {
     return (
@@ -172,7 +185,7 @@ export default function ListingDetail({ slug }: Props) {
     slug: listing.slug,
   }] : [];
 
-  const DAY_ORDER = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
+
 
   return (
     <div className="min-h-screen bg-[#F7F6F2]">
@@ -186,9 +199,25 @@ export default function ListingDetail({ slug }: Props) {
           <p className="text-[13px] font-bold text-[#0D2461] truncate">{listing.nom}</p>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={share} className="w-8 h-8 rounded-lg bg-[#F7F6F2] flex items-center justify-center text-gray-500 hover:bg-[#0D2461] hover:text-white transition-all">
-            <Share2 size={14} />
-          </button>
+          <div className="relative">
+            <button onClick={() => setShareMenuOpen((v) => !v)} className="w-8 h-8 rounded-lg bg-[#F7F6F2] flex items-center justify-center text-gray-500 hover:bg-[#0D2461] hover:text-white transition-all">
+              <Share2 size={14} />
+            </button>
+            {shareMenuOpen && (
+              <div className="absolute right-0 top-10 bg-white border border-black/10 rounded-xl shadow-xl z-50 min-w-[180px] overflow-hidden">
+                <button onClick={shareWhatsApp} className="flex items-center gap-2.5 w-full px-4 py-3 text-[13px] font-semibold text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">
+                  <MessageCircle size={15} className="text-green-500" /> WhatsApp
+                </button>
+                <button onClick={shareFacebook} className="flex items-center gap-2.5 w-full px-4 py-3 text-[13px] font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+                  <Globe size={15} className="text-blue-600" /> Facebook
+                </button>
+                <button onClick={copyLink} className="flex items-center gap-2.5 w-full px-4 py-3 text-[13px] font-semibold text-gray-700 hover:bg-gray-50 transition-colors border-t border-black/8">
+                  {copiedLink ? <Check size={15} className="text-green-500" /> : <Copy size={15} />}
+                  {copiedLink ? "Lien copié !" : "Copier le lien"}
+                </button>
+              </div>
+            )}
+          </div>
           <button onClick={toggleFav}
             className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${isFav ? "bg-red-50 text-red-500" : "bg-[#F7F6F2] text-gray-500 hover:bg-red-50 hover:text-red-400"}`}>
             <Heart size={14} className={isFav ? "fill-red-500" : ""} />
@@ -357,17 +386,21 @@ export default function ListingDetail({ slug }: Props) {
                   <Clock size={16} /> Horaires d&apos;ouverture
                 </h2>
                 <div className="flex flex-col gap-2">
-                  {DAY_ORDER.map((day) => {
-                    const h = hours.find((x) => x.jour === day);
-                    const today = new Date().toLocaleDateString("fr-FR", { weekday: "long" });
-                    const isToday = today.charAt(0).toUpperCase() + today.slice(1) === day;
-                    const isOpen = h && h.ouvert;
+                  {DOW_TO_FR.map((dayName, dow) => {
+                    // day_of_week: 0=Dimanche, 1=Lundi … 6=Samedi
+                    const h = hours.find((x: any) => x.day_of_week === dow);
+                    const todayDow = new Date().getDay(); // 0=Sun JS
+                    const isToday = dow === todayDow;
+                    const isOpen = h && !h.is_closed && h.open_time;
                     return (
-                      <div key={day} className={`flex items-center justify-between py-1.5 ${isToday ? "font-bold" : ""}`}>
-                        <span className={`text-[13px] ${isToday ? "text-[#0D2461]" : "text-gray-500"}`}>{day}</span>
+                      <div key={dow} className={`flex items-center justify-between py-1.5 border-b border-black/5 last:border-0 ${isToday ? "font-bold" : ""}`}>
+                        <span className={`text-[13px] ${isToday ? "text-[#0D2461]" : "text-gray-500"}`}>
+                          {dayName}
+                          {isToday && <span className="ml-1.5 text-[10px] bg-[#0D2461] text-white px-1.5 py-0.5 rounded-full">Aujourd'hui</span>}
+                        </span>
                         {isOpen ? (
-                          <span className={`text-[13px] ${isToday ? "text-[#0D2461]" : "text-gray-600"}`}>
-                            {h.heure_ouverture?.slice(0, 5)} – {h.heure_fermeture?.slice(0, 5)}
+                          <span className={`text-[13px] ${isToday ? "text-[#0D2461] font-bold" : "text-gray-600"}`}>
+                            {h.open_time?.slice(0, 5)} – {h.close_time?.slice(0, 5)}
                           </span>
                         ) : (
                           <span className="text-[12px] text-red-400 font-medium">Fermé</span>
