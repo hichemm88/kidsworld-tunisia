@@ -40,7 +40,7 @@ export default async function VillePage({ params }: { params: { ville: string } 
   const info = VILLES[params.ville];
   if (!info) notFound();
 
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Fetch listings for this city
   const { data: listings } = await supabase
@@ -118,14 +118,14 @@ export default async function VillePage({ params }: { params: { ville: string } 
           ) : (
             <>
               <p className="text-[14px] text-gray-500 mb-5">
-                <strong className="text-[#0D2461]">{listings!.length} établissement{listings!.length > 1 ? "s" : ""}</strong> rĩpférencé{listings!.length > 1 ? "s" : ""} à {info.nom}
+                <strong className="text-[#0D2461]">{listings!.length} établissement{listings!.length > 1 ? "s" : ""}</strong> référencé{listings!.length > 1 ? "s" : ""} à {info.nom}
               </p>
 
               <div className="flex flex-col gap-3">
                 {(listings ?? []).map((l: any) => {
                   const color = CAT_COLORS[l.category_nom] ?? l.category_couleur ?? "#F26522";
                   return (
-                    <Link id={l.id} href={`/listing/${l.slug}`}
+                    <Link key={l.id} href={`/listing/${l.slug}`}
                       className={`bg-white rounded-2xl border-[1.5px] p-4 flex items-center gap-3 hover:shadow-lg hover:-translate-y-0.5 transition-all ${l.plan === "premium" ? "border-amber-300" : "border-black/8"}`}>
                       <div className="w-[52px] h-[52px] rounded-xl flex-shrink-0 flex items-center justify-center text-[22px]"
                         style={{ background: color + "15" }}>
@@ -168,5 +168,6 @@ export default async function VillePage({ params }: { params: { ville: string } 
         </div>
       </div>
     </>
+ 
   );
 }
