@@ -9,7 +9,7 @@ import {
   ArrowLeft, Heart, Share2, Star, MapPin, Clock, Phone, Globe,
   ChevronDown, ChevronUp, Crown, CheckCircle, Loader2,
   Navigation, Images, Building2, Zap, BookOpen, Palette, Gift, ShoppingBag,
-  MessageCircle, Copy, Check,
+  MessageCircle, Copy, Check, ShieldCheck,
 } from "lucide-react";
 
 const CAT_ICONS: Record<string, { Icon: React.ComponentType<any>; color: string }> = {
@@ -65,6 +65,8 @@ export default function ListingDetail({ slug }: Props) {
   const [reviewForm, setReviewForm] = useState({ note: 5, commentaire: "" });
   const [submittingReview, setSubmittingReview] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [claimLoading, setClaimLoading] = useState(false);
+  const [claimDone, setClaimDone] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -130,6 +132,18 @@ export default function ListingDetail({ slug }: Props) {
       setReviewForm({ note: 5, commentaire: "" });
     }
     setSubmittingReview(false);
+  };
+
+  const claimListing = async () => {
+    if (!user) { router.push("/auth/login"); return; }
+    if (!listing || listing.owner_id) return;
+    setClaimLoading(true);
+    const { error } = await supabase.from("listings").update({ owner_id: user.id }).eq("id", listing.id);
+    if (!error) {
+      setListing((l: any) => ({ ...l, owner_id: user.id }));
+      setClaimDone(true);
+    }
+    setClaimLoading(false);
   };
 
   const shareUrl = typeof window !== "undefined" ? window.location.href : "";
@@ -562,6 +576,24 @@ export default function ListingDetail({ slug }: Props) {
               <Heart size={15} className={isFav ? "fill-red-500" : ""} />
               {isFav ? "Retire des favoris" : "Ajouter aux favoris"}
             </button>
+
+            {/* Claim listing — visible si pas de propriétaire */}
+            {!listing.owner_id && (
+              claimDone ? (
+                <div className="flex items-center justify-center gap-2 py-3 rounded-2xl text-[13px] font-bold text-green-700 bg-green-50 border border-green-200">
+                  <CheckCircle size={15} /> Établissement réclamé !
+                </div>
+              ) : (
+                <button
+                  onClick={claimListing}
+                  disabled={claimLoading}
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl font-bold text-[13px] border border-dashed border-[#0D2461]/30 text-[#0D2461] hover:bg-[#0D2461] hover:text-white hover:border-solid transition-all disabled:opacity-50"
+                >
+                  {claimLoading ? <Loader2 size={14} className="animate-spin" /> : <ShieldCheck size={14} />}
+                  C&apos;est mon établissement
+                </button>
+              )
+            )}
           </div>
         </div>
       </div>
