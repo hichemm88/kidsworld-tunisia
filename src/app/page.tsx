@@ -13,8 +13,8 @@ export default function HomePage() {
         <Hero />
         <StatsBar />
         <CategoriesGrid />
-        <VillesGrid />
         <FeaturedListings />
+        <VillesGrid />
       </main>
     </>
   );
