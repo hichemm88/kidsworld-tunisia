@@ -6,8 +6,18 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase-client";
 import {
   Eye, Star, Edit3, Crown, MapPin, LogOut, Plus,
-  ChevronRight, ToggleLeft, ToggleRight, Loader2, Bell
+  ChevronRight, ToggleLeft, ToggleRight, Loader2, Bell,
+  MessageCircle, Building2, Heart, BookOpen, Zap, Palette, Gift, ShoppingBag,
 } from "lucide-react";
+
+const CAT_ICONS: Record<string, React.ComponentType<any>> = {
+  sante: Heart, education: BookOpen, loisirs: Zap,
+  ateliers: Palette, fetes: Gift, shopping: ShoppingBag,
+};
+const CAT_COLORS: Record<string, string> = {
+  sante: "#16a34a", education: "#7C3AED", loisirs: "#2563EB",
+  ateliers: "#DC2626", fetes: "#DB2777", shopping: "#0891B2",
+};
 
 export default function DashboardPage() {
   const supabase = createClient();
@@ -100,7 +110,7 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="font-bebas text-[28px] text-[#0D2461] tracking-wide leading-none">
-              Bonjour, {user?.email?.split("@")[0]} 👋
+              Bonjour, {user?.email?.split("@")[0]}
             </h1>
             <p className="text-[13px] text-gray-500 mt-0.5">Gérez vos établissements depuis votre tableau de bord</p>
           </div>
@@ -113,14 +123,14 @@ export default function DashboardPage() {
         {/* KPIs */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
           {[
-            { label: "Listings actifs", value: listings.filter((l) => l.is_active).length, icon: "📍", color: "bg-blue-50 text-blue-600" },
-            { label: "Total vues", value: totalViews || "–", icon: "👁️", color: "bg-green-50 text-green-600" },
-            { label: "Note moyenne", value: avgRating + (avgRating !== "–" ? " ★" : ""), icon: "⭐", color: "bg-amber-50 text-amber-600" },
-            { label: "Avis reçus", value: totalReviews, icon: "💬", color: "bg-purple-50 text-purple-600" },
+            { label: "Listings actifs", value: listings.filter((l) => l.is_active).length, Icon: MapPin, color: "bg-blue-50 text-blue-600" },
+            { label: "Total vues", value: totalViews || "–", Icon: Eye, color: "bg-green-50 text-green-600" },
+            { label: "Note moyenne", value: avgRating + (avgRating !== "–" ? " ★" : ""), Icon: Star, color: "bg-amber-50 text-amber-600" },
+            { label: "Avis reçus", value: totalReviews, Icon: MessageCircle, color: "bg-purple-50 text-purple-600" },
           ].map((s) => (
             <div key={s.label} className="bg-white rounded-2xl p-4 border border-black/8">
-              <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg mb-2.5 ${s.color}`}>
-                {s.icon}
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-2.5 ${s.color}`}>
+                <s.Icon size={16} />
               </div>
               <p className="font-bebas text-[28px] text-[#0D2461] leading-none tracking-wide">{s.value}</p>
               <p className="text-[11px] text-gray-400 mt-0.5">{s.label}</p>
@@ -134,7 +144,9 @@ export default function DashboardPage() {
 
           {listings.length === 0 ? (
             <div className="bg-white rounded-2xl border border-black/8 p-10 text-center">
-              <div className="text-4xl mb-3">🏢</div>
+              <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-3">
+                <Building2 size={28} className="text-gray-300" />
+              </div>
               <p className="font-bold text-[16px] text-gray-700 mb-2">Aucun établissement encore</p>
               <p className="text-[13px] text-gray-400 mb-6">Créez votre première fiche et commencez à attirer des parents</p>
               <Link href="/dashboard/listing/nouveau/edit"
@@ -146,8 +158,9 @@ export default function DashboardPage() {
             <div className="flex flex-col gap-3">
               {listings.map((l) => (
                 <div key={l.id} className="bg-white rounded-2xl border border-black/8 p-4 flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-[#F7F6F2] flex items-center justify-center text-2xl flex-shrink-0">
-                    {l.category_emoji || "📍"}
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
+                    style={{ background: (CAT_COLORS[l.category_slug] ?? "#F26522") + "18" }}>
+                    {(() => { const I = CAT_ICONS[l.category_slug] ?? Building2; const c = CAT_COLORS[l.category_slug] ?? "#F26522"; return <I size={22} style={{ color: c }} strokeWidth={1.75} />; })()}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -194,7 +207,7 @@ export default function DashboardPage() {
             <h2 className="font-bold text-[15px] text-[#0D2461] mb-4">Derniers avis reçus</h2>
             {reviews.length === 0 ? (
               <div className="text-center py-6">
-                <div className="text-3xl mb-2">⭐</div>
+                <Star size={28} className="mx-auto text-gray-200 mb-2" />
                 <p className="text-[13px] text-gray-400">Aucun avis pour l&apos;instant</p>
               </div>
             ) : (
@@ -228,15 +241,16 @@ export default function DashboardPage() {
             <h2 className="font-bold text-[15px] text-[#0D2461] mb-4">Actions rapides</h2>
             <div className="flex flex-col gap-1">
               {[
-                { icon: "➕", label: "Ajouter un nouveau listing", href: "/dashboard/listing/nouveau/edit" },
-                { icon: "👤", label: "Gérer mon profil", href: "/profil" },
-                { icon: "🏠", label: "Retour à l'accueil", href: "/" },
-                { icon: "🔍", label: "Voir tous les listings", href: "/listings" },
-                { icon: "⭐", label: "Offres Premium", href: "/tarifs" },
+                { Icon: Plus,    label: "Ajouter un nouveau listing", href: "/dashboard/listing/nouveau/edit" },
+                { Icon: Eye,     label: "Voir tous les listings",      href: "/listings" },
+                { Icon: Crown,   label: "Offres Premium",              href: "/tarifs" },
+                { Icon: MapPin,  label: "Retour à l'accueil",          href: "/" },
               ].map((action) => (
                 <Link key={action.href} href={action.href}
                   className="flex items-center gap-3 p-3 rounded-xl hover:bg-[#F7F6F2] transition-colors group">
-                  <span className="text-lg">{action.icon}</span>
+                  <div className="w-8 h-8 rounded-xl bg-[#F7F6F2] flex items-center justify-center group-hover:bg-[#0D2461]/10 transition-colors">
+                    <action.Icon size={15} className="text-gray-500 group-hover:text-[#0D2461]" />
+                  </div>
                   <span className="flex-1 text-[13px] font-semibold text-gray-700 group-hover:text-[#0D2461]">
                     {action.label}
                   </span>
