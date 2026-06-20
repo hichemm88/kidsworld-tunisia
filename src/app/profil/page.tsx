@@ -322,7 +322,9 @@ export default function ProfilPage() {
 
               {children.length === 0 ? (
                 <div className="bg-white rounded-2xl border border-black/8 p-8 text-center">
-                  <div className="text-4xl mb-3">👶</div>
+                  <div className="w-14 h-14 rounded-2xl bg-[#F7F6F2] flex items-center justify-center mx-auto mb-3">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D1D5DB" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0 1 12 0v2"/></svg>
+                  </div>
                   <p className="font-bold text-[15px] text-gray-700 mb-1">Aucun enfant ajouté</p>
                   <p className="text-[13px] text-gray-400 mb-4">Ajoutez vos enfants pour personnaliser votre expérience</p>
                   <button onClick={() => openModal()}
