@@ -472,7 +472,7 @@ export default function EditListingPage() {
                   </div>
                 </div>
                 <div className="bg-[#F7F6F2] rounded-xl p-3 text-[12px] text-gray-500">
-                  💡 Pour obtenir les coordonnées GPS : ouvrez Google Maps, cliquez sur votre adresse, et notez les coordonnées affichées.
+                  Pour obtenir les coordonnees GPS : ouvrez Google Maps, cliquez sur votre adresse, et notez les coordonnees affichees.
                 </div>
               </div>
             )}
@@ -482,7 +482,7 @@ export default function EditListingPage() {
           <button onClick={saveAll} disabled={saving}
             className="w-full mt-4 flex items-center justify-center gap-2 bg-[#0D2461] text-white font-bold text-[14px] py-3.5 rounded-2xl hover:bg-[#1a3a8a] disabled:opacity-60 transition-all">
             {saving ? <Loader2 size={16} className="animate-spin" /> : saved ? <Check size={16} /> : <Save size={16} />}
-            {saving ? "Enregistrement en cours..." : saved ? "Enregistré avec succès !" : "Enregistrer toutes les modifications"}
+            {saving ? "Enregistrement en cours..." : saved ? "Enregistre avec succes !" : "Enregistrer toutes les modifications"}
           </button>
         </div>
       </div>
