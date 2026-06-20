@@ -90,13 +90,31 @@ export default function EditListingPage() {
         const [hoursRes, pricesRes, mediaRes] = await Promise.all([
           supabase.from("listing_hours").select("*").eq("listing_id", id),
           supabase.from("listing_prices").select("*").eq("listing_id", id),
-          supabase.from("listing_media").select("*").eq("listing_id", id).eq("type", "image").order("position"),
+          supabase.from("listing_media").select("*").eq("listing_id", id).eq("type", "image").order("ordre"),
         ]);
+
+        // Map DB day_of_week (0=Sun,1=Mon…6=Sat) → UI jour string
+        const DOW_TO_JOUR: Record<number, string> = {
+          0: "Dimanche", 1: "Lundi", 2: "Mardi",
+          3: "Mercredi", 4: "Jeudi", 5: "Vendredi", 6: "Samedi",
+        };
+        const JOUR_TO_DOW: Record<string, number> = Object.fromEntries(
+          Object.entries(DOW_TO_JOUR).map(([k, v]) => [v, Number(k)])
+        );
 
         if (hoursRes.data && hoursRes.data.length > 0) {
           setHoraires(DAYS.map((jour) => {
-            const existing = hoursRes.data.find((h: any) => h.jour === jour);
-            return existing || { jour, ouvert: false, heure_ouverture: "09:00", heure_fermeture: "18:00" };
+            const dow = JOUR_TO_DOW[jour];
+            const existing = hoursRes.data.find((h: any) => h.day_of_week === dow);
+            if (existing) {
+              return {
+                jour,
+                ouvert: !existing.is_closed && !!existing.open_time,
+                heure_ouverture: existing.open_time?.slice(0, 5) || "09:00",
+                heure_fermeture: existing.close_time?.slice(0, 5) || "18:00",
+              };
+            }
+            return { jour, ouvert: false, heure_ouverture: "09:00", heure_fermeture: "18:00" };
           }));
         }
         if (pricesRes.data && pricesRes.data.length > 0) {
@@ -144,10 +162,20 @@ export default function EditListingPage() {
         if (error) throw error;
       }
 
-      // Save horaires
+      // Save horaires — convert UI format → DB schema
       if (lid) {
+        const JOUR_TO_DOW: Record<string, number> = {
+          "Dimanche": 0, "Lundi": 1, "Mardi": 2, "Mercredi": 3,
+          "Jeudi": 4, "Vendredi": 5, "Samedi": 6,
+        };
         await supabase.from("listing_hours").delete().eq("listing_id", lid);
-        const hoursToInsert = horaires.filter((h) => h.ouvert).map((h) => ({ listing_id: lid, ...h }));
+        const hoursToInsert = horaires.map((h) => ({
+          listing_id: lid,
+          day_of_week: JOUR_TO_DOW[h.jour] ?? 0,
+          open_time: h.ouvert ? h.heure_ouverture : null,
+          close_time: h.ouvert ? h.heure_fermeture : null,
+          is_closed: !h.ouvert,
+        }));
         if (hoursToInsert.length > 0) await supabase.from("listing_hours").insert(hoursToInsert);
 
         // Save tarifs
@@ -162,7 +190,7 @@ export default function EditListingPage() {
 
         // Save photos
         await supabase.from("listing_media").delete().eq("listing_id", lid).eq("type", "image");
-        const media = photos.filter(Boolean).map((url, i) => ({ listing_id: lid, url, type: "image", position: i }));
+        const media = photos.filter(Boolean).map((url, i) => ({ listing_id: lid, url, type: "image", is_cover: i === 0, ordre: i }));
         if (media.length > 0) await supabase.from("listing_media").insert(media);
       }
 
