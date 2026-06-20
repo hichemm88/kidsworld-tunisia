@@ -17,21 +17,21 @@ import {
 } from "lucide-react";
 
 const CATEGORIES = [
-  { slug: "sante",     nom: "SantÃ©",              emoji: "ð¥" },
-  { slug: "education", nom: "Ãducation",           emoji: "ð" },
-  { slug: "loisirs",   nom: "Loisirs",             emoji: "ðª" },
-  { slug: "ateliers",  nom: "Ateliers & Sport",    emoji: "ð¨" },
-  { slug: "fetes",     nom: "FÃªtes & ÃvÃ©nements",  emoji: "ð" },
-  { slug: "shopping",  nom: "Shopping",            emoji: "ð" },
+  { slug: "sante",     nom: "Santé",              emoji: "🏥" },
+  { slug: "education", nom: "Éducation",           emoji: "🎓" },
+  { slug: "loisirs",   nom: "Loisirs",             emoji: "🎪" },
+  { slug: "ateliers",  nom: "Ateliers & Sport",    emoji: "🎨" },
+  { slug: "fetes",     nom: "Fêtes & Événements",  emoji: "🎂" },
+  { slug: "shopping",  nom: "Shopping",            emoji: "🛍" },
 ];
 
 const CITIES = [
   "Tunis", "Ariana", "Ben Arous", "La Marsa", "La Soukra",
-  "Sfax", "Sousse", "Nabeul", "Monastir", "Bizerte",
-  "Hammamet", "GabÃ¨s", "Gafsa", "Kairouan", "MÃ©denine",
+  "Manouba", "Sfax", "Sousse", "Nabeul", "Monastir",
+  "Bizerte", "Hammamet", "Gabès", "Kairouan",
 ];
 
-const COUNTS = [10, 25, 50];
+const COUNTS = [10, 25, 50, 100];
 
 interface ScrapedListing {
   id: string;
@@ -40,8 +40,9 @@ interface ScrapedListing {
   adresse: string | null;
   phone: string | null;
   website: string | null;
-  photos: number;
   hasHours: boolean;
+  lat: number | null;
+  lng: number | null;
 }
 
 export default function AdminScraper() {
@@ -50,6 +51,8 @@ export default function AdminScraper() {
   const [count, setCount] = useState(50);
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<ScrapedListing[] | null>(null);
+  const [skippedCount, setSkippedCount] = useState(0);
+  const [totalFound, setTotalFound] = useState(0);
   const [errors, setErrors] = useState<string[]>([]);
   const [apiError, setApiError] = useState<string | null>(null);
 
@@ -58,6 +61,8 @@ export default function AdminScraper() {
     setResults(null);
     setErrors([]);
     setApiError(null);
+    setSkippedCount(0);
+    setTotalFound(0);
 
     try {
       const res = await fetch("/api/admin/scrape", {
@@ -72,6 +77,8 @@ export default function AdminScraper() {
       } else {
         setResults(data.inserted || []);
         setErrors(data.errors || []);
+        setSkippedCount(data.skipped_count || 0);
+        setTotalFound(data.total_found || 0);
       }
     } catch (e: any) {
       setApiError(e.message);
@@ -90,24 +97,24 @@ export default function AdminScraper() {
           <div className="w-9 h-9 rounded-xl bg-[#F26522]/10 flex items-center justify-center">
             <Database size={18} className="text-[#F26522]" />
           </div>
-          <h1 className="text-2xl font-black text-gray-900">Import de donnÃ©es</h1>
+          <h1 className="text-2xl font-black text-gray-900">Import de données</h1>
         </div>
         <p className="text-sm text-gray-500 ml-12">
-          Scrape des Ã©tablissements rÃ©els via Google Places et les insÃ¨re automatiquement dans la base de donnÃ©es.
+          Scrape des établissements réels via Google Places et les insère automatiquement dans la base de données.
         </p>
       </div>
 
       {/* Config card */}
       <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
         <h2 className="text-sm font-bold text-gray-700 mb-5 uppercase tracking-wider">
-          ParamÃ¨tres de recherche
+          Paramètres de recherche
         </h2>
 
         <div className="grid grid-cols-3 gap-6 mb-6">
           {/* Category */}
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              CatÃ©gorie
+              Catégorie
             </label>
             <select
               value={category}
@@ -170,10 +177,10 @@ export default function AdminScraper() {
             <span className="text-lg">{selectedCat?.emoji}</span>
             <span>
               Recherche <strong>{count} fiches</strong> dans{" "}
-              <strong>{selectedCat?.nom}</strong> Ã  <strong>{city}</strong>
+              <strong>{selectedCat?.nom}</strong> à <strong>{city}</strong>
             </span>
           </div>
-          <span className="text-xs text-gray-400">via Google Places API</span>
+          <span className="text-xs text-gray-400 flex items-center gap-1"><Globe size={11} /> OpenStreetMap — gratuit, aucune clé</span>
         </div>
 
         {/* Run button */}
@@ -185,7 +192,7 @@ export default function AdminScraper() {
           {loading ? (
             <>
               <Loader2 size={16} className="animate-spin" />
-              Scraping en coursâ¦
+              Scraping en cours…
             </>
           ) : (
             <>
@@ -220,7 +227,7 @@ export default function AdminScraper() {
           </p>
           <ul className="text-xs text-amber-600 space-y-0.5 max-h-32 overflow-y-auto">
             {errors.map((e, i) => (
-              <li key={i} className="font-mono">â¢ {e}</li>
+              <li key={i} className="font-mono">• {e}</li>
             ))}
           </ul>
         </div>
@@ -230,18 +237,24 @@ export default function AdminScraper() {
       {results !== null && (
         <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
           {/* Stats bar */}
-          <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-6">
+          <div className="px-6 py-4 border-b border-gray-100 flex flex-wrap items-center gap-5">
             <div className="flex items-center gap-2">
               <CheckCircle2 size={16} className="text-green-500" />
-              <span className="text-sm font-bold text-gray-900">{results.length} insÃ©rÃ©s</span>
+              <span className="text-sm font-bold text-gray-900">{results.length} insérés</span>
             </div>
+            {skippedCount > 0 && (
+              <div className="flex items-center gap-2 text-amber-500">
+                <AlertCircle size={14} />
+                <span className="text-sm">{skippedCount} doublons ignorés</span>
+              </div>
+            )}
             <div className="flex items-center gap-2 text-gray-400">
-              <Image size={14} />
-              <span className="text-sm">{results.reduce((s, r) => s + r.photos, 0)} photos</span>
+              <BarChart2 size={14} />
+              <span className="text-sm">{totalFound} trouvés dans OSM</span>
             </div>
             <div className="flex items-center gap-2 text-gray-400">
               <Phone size={14} />
-              <span className="text-sm">{results.filter((r) => r.phone).length} avec tÃ©l</span>
+              <span className="text-sm">{results.filter((r) => r.phone).length} avec tél</span>
             </div>
             <div className="flex items-center gap-2 text-gray-400">
               <Clock size={14} />
@@ -249,24 +262,28 @@ export default function AdminScraper() {
             </div>
             <div className="flex items-center gap-2 text-gray-400">
               <Globe size={14} />
-              <span className="text-sm">{results.filter((r) => r.website).length} avec site web</span>
+              <span className="text-sm">{results.filter((r) => r.website).length} avec site</span>
+            </div>
+            <div className="flex items-center gap-2 text-gray-400">
+              <MapPin size={14} />
+              <span className="text-sm">{results.filter((r) => r.lat).length} avec GPS</span>
             </div>
           </div>
 
           {results.length === 0 ? (
             <div className="py-16 text-center text-gray-400 text-sm">
-              Aucun rÃ©sultat trouvÃ© pour cette combinaison catÃ©gorie / ville.
+              Aucun résultat trouvé pour cette combinaison catégorie / ville.
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
                   <tr>
-                    <th className="px-4 py-3 text-left font-semibold">Ãtablissement</th>
+                    <th className="px-4 py-3 text-left font-semibold">Établissement</th>
                     <th className="px-4 py-3 text-left font-semibold">Adresse</th>
-                    <th className="px-4 py-3 text-center font-semibold">TÃ©l</th>
+                    <th className="px-4 py-3 text-center font-semibold">Tél</th>
                     <th className="px-4 py-3 text-center font-semibold">Site</th>
-                    <th className="px-4 py-3 text-center font-semibold">Photos</th>
+                    <th className="px-4 py-3 text-center font-semibold">GPS</th>
                     <th className="px-4 py-3 text-center font-semibold">Horaires</th>
                     <th className="px-4 py-3 text-center font-semibold">Lien</th>
                   </tr>
@@ -282,7 +299,7 @@ export default function AdminScraper() {
                         <div className="flex items-start gap-1.5 text-gray-500">
                           <MapPin size={12} className="mt-0.5 shrink-0" />
                           <span className="text-xs leading-tight line-clamp-2 max-w-[180px]">
-                            {r.adresse || "â"}
+                            {r.adresse || "—"}
                           </span>
                         </div>
                       </td>
@@ -290,31 +307,30 @@ export default function AdminScraper() {
                         {r.phone ? (
                           <span className="text-xs text-gray-700 font-mono">{r.phone}</span>
                         ) : (
-                          <span className="text-gray-300">â</span>
+                          <span className="text-gray-300">—</span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-center">
                         {r.website ? (
                           <CheckCircle2 size={14} className="text-green-500 mx-auto" />
                         ) : (
-                          <span className="text-gray-300">â</span>
+                          <span className="text-gray-300">—</span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-center">
-                        {r.photos > 0 ? (
-                                <span className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
-                            <Image size={10} />
-                            {r.photos}
+                        {r.lat ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                            <MapPin size={10} /> GPS
                           </span>
                         ) : (
-                          <span className="text-gray-300">â</span>
+                          <span className="text-gray-300">—</span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-center">
                         {r.hasHours ? (
                           <CheckCircle2 size={14} className="text-green-500 mx-auto" />
                         ) : (
-                          <span className="text-gray-300">â</span>
+                          <span className="text-gray-300">—</span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-center">
@@ -343,16 +359,17 @@ export default function AdminScraper() {
           <div className="flex items-start gap-3">
             <BarChart2 size={18} className="text-blue-400 mt-0.5 shrink-0" />
             <div className="text-sm text-blue-700 space-y-1">
-              <p className="font-semibold">DonnÃ©es rÃ©cupÃ©rÃ©es pour chaque fiche :</p>
+              <p className="font-semibold">Source : OpenStreetMap via Overpass API</p>
               <ul className="text-blue-600 space-y-0.5 list-disc list-inside text-xs">
-                <li>Nom, adresse complÃ¨te, coordonnÃ©es GPS (lat/lng)</li>
-                <li>NumÃ©ro de tÃ©lÃ©phone (nul si introuvable)</li>
-                <li>Site web, horaires d&apos;ouverture (7 jours)</li>
-                <li>Jusqu&apos;Ã  5 photos rÃ©elles</li>
-                <li>Description Ã©ditoriale si disponible</li>
+                <li>Aucune clé API requise — 100% gratuit</li>
+                <li>Nom officiel, adresse, coordonnées GPS</li>
+                <li>Numéro de téléphone (null si absent dans OSM)</li>
+                <li>Site web quand disponible</li>
+                <li>Horaires d&apos;ouverture (7 jours) si renseignés dans OSM</li>
+                <li>Doublons automatiquement ignorés</li>
               </ul>
               <p className="text-xs text-blue-500 mt-2">
-                Requiert <code className="bg-blue-100 px-1 rounded">GOOGLE_PLACES_API_KEY</code> dans les variables d&apos;environnement Vercel.
+                Astuce : Lancez plusieurs fois avec différentes catégories pour enrichir la base.
               </p>
             </div>
           </div>
