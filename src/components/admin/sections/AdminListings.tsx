@@ -6,7 +6,8 @@ import { createClient } from "@/lib/supabase-client";
 import {
   Building2, Search, Eye, Edit3, Trash2, Crown,
   CheckCircle2, AlertCircle, RefreshCw, Loader2,
-  ChevronUp, ChevronDown, Filter,
+  ChevronUp, ChevronDown, Filter, Download, Square,
+  CheckSquare, Plus, MapPin, Phone, Globe,
 } from "lucide-react";
 
 type SortField = "nom" | "ville" | "plan" | "note_moyenne" | "created_at";
@@ -21,6 +22,8 @@ export default function AdminListings() {
   const [filterStatus, setFilterStatus] = useState<"all" | "active" | "inactive">("all");
   const [sortField, setSortField] = useState<SortField>("created_at");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkLoading, setBulkLoading] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -49,6 +52,73 @@ export default function AdminListings() {
     if (!confirm(`Supprimer "${nom}" ? Action irréversible.`)) return;
     await supabase.from("listings").delete().eq("id", id);
     setListings((ls) => ls.filter((l) => l.id !== id));
+  };
+
+  // ── Selection ────────────────────────────────────────────
+  const toggleSelect = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+  const toggleSelectAll = () => {
+    if (selected.size === filtered.length) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(filtered.map((l) => l.id)));
+    }
+  };
+
+  // ── Bulk actions ─────────────────────────────────────────
+  const bulkDelete = async () => {
+    if (!selected.size) return;
+    if (!confirm(`Supprimer ${selected.size} listing(s) ? Action irréversible.`)) return;
+    setBulkLoading(true);
+    for (const id of selected) {
+      await supabase.from("listings").delete().eq("id", id);
+    }
+    setListings((ls) => ls.filter((l) => !selected.has(l.id)));
+    setSelected(new Set());
+    setBulkLoading(false);
+  };
+
+  const bulkSetPlan = async (plan: "free" | "premium") => {
+    if (!selected.size) return;
+    setBulkLoading(true);
+    await supabase.from("listings").update({ plan }).in("id", [...selected]);
+    setListings((ls) => ls.map((l) => selected.has(l.id) ? { ...l, plan } : l));
+    setSelected(new Set());
+    setBulkLoading(false);
+  };
+
+  const bulkSetActive = async (is_active: boolean) => {
+    if (!selected.size) return;
+    setBulkLoading(true);
+    await supabase.from("listings").update({ is_active }).in("id", [...selected]);
+    setListings((ls) => ls.map((l) => selected.has(l.id) ? { ...l, is_active } : l));
+    setSelected(new Set());
+    setBulkLoading(false);
+  };
+
+  // ── CSV Export ───────────────────────────────────────────
+  const exportCsv = () => {
+    const rows = filtered;
+    const headers = ["nom", "ville", "plan", "is_active", "is_verified", "phone", "website", "note_moyenne", "nb_avis", "category_nom", "created_at"];
+    const csv = [
+      headers.join(";"),
+      ...rows.map((l) => headers.map((h) => {
+        const val = l[h] ?? "";
+        return `"${String(val).replace(/"/g, '""')}"`;
+      }).join(";")),
+    ].join("\n");
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `kidsworld-listings-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const sort = (field: SortField) => {
@@ -98,15 +168,62 @@ export default function AdminListings() {
             {total} listings · {premium} premium · {active} actifs
           </p>
         </div>
-        <button
-          onClick={load}
-          disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 bg-white border border-black/8 rounded-xl text-[13px] font-semibold text-gray-500 hover:text-[#0D2461] transition-all"
-        >
-          <RefreshCw size={13} className={loading ? "animate-spin" : ""} />
-          Actualiser
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={exportCsv}
+            className="flex items-center gap-1.5 px-3 py-2 bg-white border border-black/8 rounded-xl text-[13px] font-semibold text-gray-500 hover:text-[#0D2461] transition-all"
+            title="Exporter CSV"
+          >
+            <Download size={13} /> CSV
+          </button>
+          <Link
+            href="/dashboard/listing/nouveau"
+            className="flex items-center gap-1.5 px-3 py-2 bg-[#0D2461] text-white rounded-xl text-[13px] font-bold hover:bg-[#1a3a8a] transition-all"
+          >
+            <Plus size={13} /> Nouveau
+          </Link>
+          <button
+            onClick={load}
+            disabled={loading}
+            className="flex items-center gap-2 px-3 py-2 bg-white border border-black/8 rounded-xl text-[13px] font-semibold text-gray-500 hover:text-[#0D2461] transition-all"
+          >
+            <RefreshCw size={13} className={loading ? "animate-spin" : ""} />
+          </button>
+        </div>
       </div>
+
+      {/* Bulk action toolbar */}
+      {selected.size > 0 && (
+        <div className="flex items-center gap-3 bg-[#0D2461] text-white rounded-2xl px-4 py-3 mb-4">
+          <span className="text-[13px] font-bold">{selected.size} sélectionné(s)</span>
+          <div className="flex-1" />
+          {bulkLoading && <Loader2 size={14} className="animate-spin" />}
+          <button onClick={() => bulkSetPlan("premium")} disabled={bulkLoading}
+            className="text-[12px] font-bold bg-amber-400 text-amber-900 px-3 py-1.5 rounded-lg hover:bg-amber-300 disabled:opacity-50 transition-all">
+            ⭐ Premium
+          </button>
+          <button onClick={() => bulkSetPlan("free")} disabled={bulkLoading}
+            className="text-[12px] font-bold bg-white/20 px-3 py-1.5 rounded-lg hover:bg-white/30 disabled:opacity-50 transition-all">
+            → Free
+          </button>
+          <button onClick={() => bulkSetActive(true)} disabled={bulkLoading}
+            className="text-[12px] font-bold bg-green-400 text-green-900 px-3 py-1.5 rounded-lg hover:bg-green-300 disabled:opacity-50 transition-all">
+            Activer
+          </button>
+          <button onClick={() => bulkSetActive(false)} disabled={bulkLoading}
+            className="text-[12px] font-bold bg-white/20 px-3 py-1.5 rounded-lg hover:bg-white/30 disabled:opacity-50 transition-all">
+            Masquer
+          </button>
+          <button onClick={bulkDelete} disabled={bulkLoading}
+            className="text-[12px] font-bold bg-red-500 text-white px-3 py-1.5 rounded-lg hover:bg-red-400 disabled:opacity-50 transition-all">
+            Supprimer
+          </button>
+          <button onClick={() => setSelected(new Set())}
+            className="text-[12px] text-white/60 hover:text-white px-2 py-1.5 transition-all">
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* Mini stats */}
       <div className="grid grid-cols-3 gap-3 mb-5">
@@ -178,6 +295,13 @@ export default function AdminListings() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-black/8 bg-[#F7F6F2]">
+                  <th className="px-3 py-3 w-8">
+                    <button onClick={toggleSelectAll} className="text-gray-400 hover:text-[#0D2461]">
+                      {selected.size === filtered.length && filtered.length > 0
+                        ? <CheckSquare size={14} className="text-[#0D2461]" />
+                        : <Square size={14} />}
+                    </button>
+                  </th>
                   <th
                     className="text-left px-4 py-3 text-[11px] font-bold text-gray-500 uppercase cursor-pointer hover:text-[#0D2461] select-none"
                     onClick={() => sort("nom")}
@@ -208,7 +332,12 @@ export default function AdminListings() {
               </thead>
               <tbody>
                 {filtered.map((l) => (
-                  <tr key={l.id} className="border-b border-black/5 last:border-0 hover:bg-[#F7F6F2] transition-colors">
+                  <tr key={l.id} className={`border-b border-black/5 last:border-0 hover:bg-[#F7F6F2] transition-colors ${selected.has(l.id) ? "bg-blue-50/50" : ""}`}>
+                    <td className="px-3 py-3">
+                      <button onClick={() => toggleSelect(l.id)} className="text-gray-400 hover:text-[#0D2461]">
+                        {selected.has(l.id) ? <CheckSquare size={14} className="text-[#0D2461]" /> : <Square size={14} />}
+                      </button>
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <span className="text-base">{l.category_emoji || "📍"}</span>
@@ -289,7 +418,7 @@ export default function AdminListings() {
                 ))}
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-4 py-12 text-center">
+                    <td colSpan={7} className="px-4 py-12 text-center">
                       <Building2 size={24} className="text-gray-200 mx-auto mb-2" />
                       <p className="text-[13px] text-gray-400">Aucun listing trouvé</p>
                     </td>
