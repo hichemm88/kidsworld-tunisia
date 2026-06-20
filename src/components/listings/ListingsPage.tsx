@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   SlidersHorizontal, List, LayoutGrid, X, Star, MapPin,
   ChevronDown, Search, Map, Loader2, Sparkles,
-  Heart, BookOpen, Zap, Palette, Gift, ShoppingBag, Building2,
+  Heart, BookOpen, Zap, Palette, Gift, ShoppingBag, Building2, Check,
 } from "lucide-react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -88,26 +88,49 @@ function CategoryIcon({ slug, color, size = 22 }: { slug?: string; color?: strin
 
 const VILLES = ["Tunis", "La Marsa", "Ariana", "Ben Arous", "Manouba", "La Soukra", "Ennasr"];
 
-// Fallback demo listings with real Tunis coordinates
-const DEMO_LISTINGS: Listing[] = [
-  { id: "1", slug: "jumpark-trampoline", nom: "Jumpark Trampoline", ville: "La Soukra", lat: 36.8952, lng: 10.1542, plan: "premium", is_verified: true, is_active: true, category_nom: "Loisirs", category_emoji: "🎪", category_couleur: "#2563EB", note_moyenne: 4.8, nb_avis: 124, prix_label: "Dès 15 TND", age_min: 3, age_max: 14 },
-  { id: "2", slug: "fanta-park", nom: "Fanta Park", ville: "Les Berges du Lac", lat: 36.8416, lng: 10.2351, plan: "premium", is_verified: true, is_active: true, category_nom: "Loisirs", category_emoji: "🎪", category_couleur: "#2563EB", note_moyenne: 4.6, nb_avis: 89, prix_label: "Dès 20 TND", age_min: 2, age_max: 12 },
-  { id: "3", slug: "dr-ben-ali-sana", nom: "Dr. Ben Ali Sana", ville: "Les Berges du Lac", lat: 36.8410, lng: 10.2390, plan: "premium", is_verified: true, is_active: true, category_nom: "Santé", category_emoji: "🏥", category_couleur: "#16a34a", note_moyenne: 4.9, nb_avis: 148, prix_label: "60 TND" },
-  { id: "4", slug: "kids-english-club", nom: "Kids English Club", ville: "Manar 2", lat: 36.8593, lng: 10.1928, plan: "free", is_verified: true, is_active: true, category_nom: "Éducation", category_emoji: "🎓", category_couleur: "#7C3AED", note_moyenne: 4.7, nb_avis: 89, age_min: 6, age_max: 16 },
-  { id: "5", slug: "happy-birthday-events", nom: "Happy Birthday Events", ville: "Ariana", lat: 36.8625, lng: 10.1956, plan: "premium", is_verified: false, is_active: true, category_nom: "Fêtes", category_emoji: "🎂", category_couleur: "#DB2777", note_moyenne: 4.6, nb_avis: 203, prix_label: "Sur devis" },
-  { id: "6", slug: "ecole-arc-en-ciel", nom: "École Arc-en-Ciel", ville: "La Marsa", lat: 36.8806, lng: 10.3250, plan: "free", is_verified: true, is_active: true, category_nom: "Éducation", category_emoji: "🎓", category_couleur: "#7C3AED", note_moyenne: 4.8, nb_avis: 62, age_min: 3, age_max: 6 },
-  { id: "7", slug: "club-natation-junior", nom: "Club Natation Junior", ville: "El Menzah", lat: 36.8499, lng: 10.1770, plan: "free", is_verified: true, is_active: true, category_nom: "Ateliers", category_emoji: "🎨", category_couleur: "#DC2626", note_moyenne: 4.5, nb_avis: 114, prix_label: "Dès 80 TND/mois", age_min: 4, age_max: 14 },
-  { id: "8", slug: "atelier-robotique-kids", nom: "Atelier Robotique Kids", ville: "CUN", lat: 36.8400, lng: 10.1950, plan: "premium", is_verified: true, is_active: true, category_nom: "Ateliers", category_emoji: "🎨", category_couleur: "#DC2626", note_moyenne: 4.9, nb_avis: 47, prix_label: "Dès 120 TND/mois", age_min: 8, age_max: 16 },
-  { id: "9", slug: "dr-trabelsi-dentiste", nom: "Dr. Trabelsi — Dentiste", ville: "Lac 1", lat: 36.8440, lng: 10.2300, plan: "free", is_verified: true, is_active: true, category_nom: "Santé", category_emoji: "🏥", category_couleur: "#16a34a", note_moyenne: 4.7, nb_avis: 76, prix_label: "70 TND" },
-  { id: "10", slug: "mini-ferme-pedagogique", nom: "Mini Ferme Pédagogique", ville: "Bir El Bey", lat: 36.7650, lng: 10.3180, plan: "free", is_verified: false, is_active: true, category_nom: "Loisirs", category_emoji: "🎪", category_couleur: "#2563EB", note_moyenne: 4.4, nb_avis: 58, prix_label: "Dès 25 TND", age_min: 2, age_max: 10 },
-  { id: "11", slug: "studio-danse-kids", nom: "Studio Danse Kids", ville: "Ennasr", lat: 36.8720, lng: 10.2080, plan: "free", is_verified: true, is_active: true, category_nom: "Ateliers", category_emoji: "🎨", category_couleur: "#DC2626", note_moyenne: 4.6, nb_avis: 91, prix_label: "Dès 90 TND/mois", age_min: 4, age_max: 16 },
-  { id: "12", slug: "librairie-jeunesse-tunis", nom: "Librairie Jeunesse Tunis", ville: "Les Berges du Lac", lat: 36.8430, lng: 10.2380, plan: "free", is_verified: true, is_active: true, category_nom: "Shopping", category_emoji: "🛍", category_couleur: "#0891B2", note_moyenne: 4.8, nb_avis: 134 },
+const AGE_RANGES = [
+  { label: "0–2 ans", min: 0, max: 2 },
+  { label: "3–6 ans", min: 3, max: 6 },
+  { label: "6–12 ans", min: 6, max: 12 },
+  { label: "12–18 ans", min: 12, max: 18 },
 ];
 
+// Fallback demo listings with real Tunis coordinates
+const DEMO_LISTINGS: Listing[] = [
+  { id: "1", slug: "jumpark-trampoline", nom: "Jumpark Trampoline", ville: "La Soukra", lat: 36.8952, lng: 10.1542, plan: "premium", is_verified: true, is_active: true, category_nom: "Loisirs", category_slug: "loisirs", category_emoji: "🎪", category_couleur: "#2563EB", note_moyenne: 4.8, nb_avis: 124, prix_label: "Dès 15 TND", age_min: 3, age_max: 14 },
+  { id: "2", slug: "fanta-park", nom: "Fanta Park", ville: "Les Berges du Lac", lat: 36.8416, lng: 10.2351, plan: "premium", is_verified: true, is_active: true, category_nom: "Loisirs", category_slug: "loisirs", category_emoji: "🎪", category_couleur: "#2563EB", note_moyenne: 4.6, nb_avis: 89, prix_label: "Dès 20 TND", age_min: 2, age_max: 12 },
+  { id: "3", slug: "dr-ben-ali-sana", nom: "Dr. Ben Ali Sana", ville: "Les Berges du Lac", lat: 36.8410, lng: 10.2390, plan: "premium", is_verified: true, is_active: true, category_nom: "Santé", category_slug: "sante", category_emoji: "🏥", category_couleur: "#16a34a", note_moyenne: 4.9, nb_avis: 148, prix_label: "60 TND" },
+  { id: "4", slug: "kids-english-club", nom: "Kids English Club", ville: "Manar 2", lat: 36.8593, lng: 10.1928, plan: "free", is_verified: true, is_active: true, category_nom: "Éducation", category_slug: "education", category_emoji: "🎓", category_couleur: "#7C3AED", note_moyenne: 4.7, nb_avis: 89, age_min: 6, age_max: 16 },
+  { id: "5", slug: "happy-birthday-events", nom: "Happy Birthday Events", ville: "Ariana", lat: 36.8625, lng: 10.1956, plan: "premium", is_verified: false, is_active: true, category_nom: "Fêtes", category_slug: "fetes", category_emoji: "🎂", category_couleur: "#DB2777", note_moyenne: 4.6, nb_avis: 203, prix_label: "Sur devis" },
+  { id: "6", slug: "ecole-arc-en-ciel", nom: "École Arc-en-Ciel", ville: "La Marsa", lat: 36.8806, lng: 10.3250, plan: "free", is_verified: true, is_active: true, category_nom: "Éducation", category_slug: "education", category_emoji: "🎓", category_couleur: "#7C3AED", note_moyenne: 4.8, nb_avis: 62, age_min: 3, age_max: 6 },
+  { id: "7", slug: "club-natation-junior", nom: "Club Natation Junior", ville: "El Menzah", lat: 36.8499, lng: 10.1770, plan: "free", is_verified: true, is_active: true, category_nom: "Ateliers", category_slug: "ateliers", category_emoji: "🎨", category_couleur: "#DC2626", note_moyenne: 4.5, nb_avis: 114, prix_label: "Dès 80 TND/mois", age_min: 4, age_max: 14 },
+  { id: "8", slug: "atelier-robotique-kids", nom: "Atelier Robotique Kids", ville: "CUN", lat: 36.8400, lng: 10.1950, plan: "premium", is_verified: true, is_active: true, category_nom: "Ateliers", category_slug: "ateliers", category_emoji: "🎨", category_couleur: "#DC2626", note_moyenne: 4.9, nb_avis: 47, prix_label: "Dès 120 TND/mois", age_min: 8, age_max: 16 },
+  { id: "9", slug: "dr-trabelsi-dentiste", nom: "Dr. Trabelsi — Dentiste", ville: "Lac 1", lat: 36.8440, lng: 10.2300, plan: "free", is_verified: true, is_active: true, category_nom: "Santé", category_slug: "sante", category_emoji: "🏥", category_couleur: "#16a34a", note_moyenne: 4.7, nb_avis: 76, prix_label: "70 TND" },
+  { id: "10", slug: "mini-ferme-pedagogique", nom: "Mini Ferme Pédagogique", ville: "Bir El Bey", lat: 36.7650, lng: 10.3180, plan: "free", is_verified: false, is_active: true, category_nom: "Loisirs", category_slug: "loisirs", category_emoji: "🎪", category_couleur: "#2563EB", note_moyenne: 4.4, nb_avis: 58, prix_label: "Dès 25 TND", age_min: 2, age_max: 10 },
+  { id: "11", slug: "studio-danse-kids", nom: "Studio Danse Kids", ville: "Ennasr", lat: 36.8720, lng: 10.2080, plan: "free", is_verified: true, is_active: true, category_nom: "Ateliers", category_slug: "ateliers", category_emoji: "🎨", category_couleur: "#DC2626", note_moyenne: 4.6, nb_avis: 91, prix_label: "Dès 90 TND/mois", age_min: 4, age_max: 16 },
+  { id: "12", slug: "librairie-jeunesse-tunis", nom: "Librairie Jeunesse Tunis", ville: "Les Berges du Lac", lat: 36.8430, lng: 10.2380, plan: "free", is_verified: true, is_active: true, category_nom: "Shopping", category_slug: "shopping", category_emoji: "🛍", category_couleur: "#0891B2", note_moyenne: 4.8, nb_avis: 134 },
+];
+
+// ─── Filter chip component ────────────────────────────────────────
+function FilterChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`inline-flex items-center gap-1.5 text-[12px] font-bold px-3 py-1.5 rounded-full border transition-all
+        ${active
+          ? "bg-[#0D2461] border-[#0D2461] text-white shadow-sm"
+          : "border-black/15 text-gray-600 hover:border-[#F26522] hover:text-[#F26522]"
+        }`}
+    >
+      {active && <Check size={10} />}
+      {label}
+    </button>
+  );
+}
+
 // ─── Card composants ─────────────────────────────────────────────
-function ListingCard({ l, isSelected }: { l: Listing; onClick?: () => void; isSelected?: boolean }) {
-  const color = CAT_COLOR[l.category_nom?.toLowerCase() ?? ""] ?? l.category_couleur ?? "#F26522";
-  const catSlug = Object.keys(CAT_COLOR).find((k) => l.category_nom?.toLowerCase().includes(k)) ?? "";
+function ListingCard({ l, isSelected }: { l: Listing; isSelected?: boolean }) {
+  const color = CAT_COLOR[l.category_slug ?? l.category_nom?.toLowerCase() ?? ""] ?? l.category_couleur ?? "#F26522";
   return (
     <Link
       href={`/listing/${l.slug}`}
@@ -125,7 +148,7 @@ function ListingCard({ l, isSelected }: { l: Listing; onClick?: () => void; isSe
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 mb-1 flex-wrap">
           <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full uppercase" style={{ background: color + "20", color }}>
-            {l.category_nom ?? catSlug}
+            {l.category_nom}
           </span>
           {l.is_verified && <span className="text-[9px] font-bold text-blue-800 bg-blue-100 px-1.5 py-0.5 rounded-full">✓ Vérifié</span>}
           {l.plan === "premium" && <span className="text-[9px] font-bold text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded-full">Premium</span>}
@@ -152,7 +175,7 @@ function ListingCard({ l, isSelected }: { l: Listing; onClick?: () => void; isSe
 }
 
 function GridCard({ l }: { l: Listing }) {
-  const color = CAT_COLOR[l.category_nom?.toLowerCase() ?? ""] ?? l.category_couleur ?? "#F26522";
+  const color = CAT_COLOR[l.category_slug ?? l.category_nom?.toLowerCase() ?? ""] ?? l.category_couleur ?? "#F26522";
   return (
     <Link href={`/listing/${l.slug}`} className={`bg-white rounded-2xl border-[1.5px] overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all ${l.plan === "premium" ? "border-amber-300" : "border-black/8"}`}>
       <div className="h-[120px] relative overflow-hidden">
@@ -188,6 +211,19 @@ export default function ListingsPage() {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
+
+  // Filter states
+  const [activeAgeRange, setActiveAgeRange] = useState<{ min: number; max: number } | null>(null);
+  const [onlyVerified, setOnlyVerified] = useState(false);
+  const [onlyPremium, setOnlyPremium] = useState(false);
+
+  // Active filter count badge
+  const filterCount = [
+    activeAgeRange !== null,
+    activeVille !== "all",
+    onlyVerified,
+    onlyPremium,
+  ].filter(Boolean).length;
 
   // Debounce search
   useEffect(() => {
@@ -226,15 +262,32 @@ export default function ListingsPage() {
     fetchListings();
   }, [fetchListings]);
 
-  // Client-side sort
+  // Client-side sort + filter
   const sorted = useMemo(() => {
-    const d = [...listings];
+    let d = [...listings];
+
+    // Age filter
+    if (activeAgeRange) {
+      d = d.filter((l) =>
+        l.age_min == null ||
+        l.age_max == null ||
+        (l.age_min <= activeAgeRange.max && l.age_max >= activeAgeRange.min)
+      );
+    }
+
+    // Verified filter
+    if (onlyVerified) d = d.filter((l) => l.is_verified);
+
+    // Premium filter
+    if (onlyPremium) d = d.filter((l) => l.plan === "premium");
+
     const premiumFirst = (a: Listing, b: Listing) => (b.plan === "premium" ? 1 : 0) - (a.plan === "premium" ? 1 : 0);
     if (sort === "note") d.sort((a, b) => premiumFirst(a, b) || b.note_moyenne - a.note_moyenne);
     else if (sort === "avis") d.sort((a, b) => premiumFirst(a, b) || b.nb_avis - a.nb_avis);
     else d.sort(premiumFirst);
+
     return d;
-  }, [listings, sort]);
+  }, [listings, sort, activeAgeRange, onlyVerified, onlyPremium]);
 
   // Map pins from listings with coordinates
   const mapPins: MapPinType[] = useMemo(
@@ -246,7 +299,7 @@ export default function ListingsPage() {
           lat: l.lat!,
           lng: l.lng!,
           name: l.nom,
-          category: Object.keys(CAT_COLOR).find((k) => l.category_nom?.toLowerCase().includes(k)),
+          category: l.category_slug ?? Object.keys(CAT_COLOR).find((k) => l.category_nom?.toLowerCase().includes(k)),
           premium: l.plan === "premium",
           rating: l.note_moyenne,
           slug: l.slug,
@@ -255,6 +308,16 @@ export default function ListingsPage() {
   );
 
   const selectedListing = selectedId ? sorted.find((l) => l.id === selectedId) : null;
+
+  const resetFilters = () => {
+    setActiveCat("all");
+    setActiveVille("all");
+    setSearchQuery("");
+    setActiveAgeRange(null);
+    setOnlyVerified(false);
+    setOnlyPremium(false);
+    setFilterOpen(false);
+  };
 
   return (
     <div className="flex flex-col h-[calc(100vh-57px)] bg-[#F7F6F2]">
@@ -350,10 +413,19 @@ export default function ListingsPage() {
           <div className="ml-auto flex items-center gap-2">
             <button
               onClick={() => setFilterOpen(true)}
-              className="flex items-center gap-1.5 text-[12px] font-bold text-gray-600 bg-white border border-black/15 rounded-lg px-2.5 py-1.5 hover:border-[#F26522] hover:text-[#F26522] transition-all"
+              className={`relative flex items-center gap-1.5 text-[12px] font-bold rounded-lg px-2.5 py-1.5 transition-all border
+                ${filterCount > 0
+                  ? "bg-[#0D2461] text-white border-[#0D2461]"
+                  : "text-gray-600 bg-white border-black/15 hover:border-[#F26522] hover:text-[#F26522]"
+                }`}
             >
               <SlidersHorizontal size={12} />
               <span className="hidden sm:inline">Filtres</span>
+              {filterCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#F26522] rounded-full text-[9px] font-black text-white flex items-center justify-center">
+                  {filterCount}
+                </span>
+              )}
             </button>
             <div className="relative">
               <select
@@ -363,7 +435,7 @@ export default function ListingsPage() {
               >
                 <option value="pertinence">Pertinence</option>
                 <option value="note">Mieux notés</option>
-                <option value="avis">Plus d'avis</option>
+                <option value="avis">Plus d&apos;avis</option>
               </select>
               <ChevronDown size={11} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             </div>
@@ -383,10 +455,45 @@ export default function ListingsPage() {
         </div>
       </div>
 
+      {/* ── Active filter chips ── */}
+      {filterCount > 0 && (
+        <div className="bg-white border-b border-black/8 px-4 py-1.5 overflow-x-auto no-scrollbar flex-shrink-0">
+          <div className="flex items-center gap-2 max-w-[1200px] mx-auto">
+            {activeAgeRange && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-[#0D2461]/8 text-[#0D2461] px-2.5 py-1 rounded-full">
+                {AGE_RANGES.find(r => r.min === activeAgeRange.min)?.label}
+                <button onClick={() => setActiveAgeRange(null)} className="ml-0.5 hover:text-[#F26522]"><X size={10} /></button>
+              </span>
+            )}
+            {activeVille !== "all" && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-[#0D2461]/8 text-[#0D2461] px-2.5 py-1 rounded-full">
+                {activeVille}
+                <button onClick={() => setActiveVille("all")} className="ml-0.5 hover:text-[#F26522]"><X size={10} /></button>
+              </span>
+            )}
+            {onlyVerified && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-[#0D2461]/8 text-[#0D2461] px-2.5 py-1 rounded-full">
+                Vérifié ✓
+                <button onClick={() => setOnlyVerified(false)} className="ml-0.5 hover:text-[#F26522]"><X size={10} /></button>
+              </span>
+            )}
+            {onlyPremium && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full">
+                Premium
+                <button onClick={() => setOnlyPremium(false)} className="ml-0.5 hover:text-[#F26522]"><X size={10} /></button>
+              </span>
+            )}
+            <button onClick={resetFilters} className="text-[11px] text-gray-400 hover:text-[#F26522] font-bold ml-1 transition-colors">
+              Tout effacer
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ── Main content ── */}
       <div className="flex flex-1 overflow-hidden">
 
-        {/* Listings panel — masqué en mode carte mobile */}
+        {/* Listings panel */}
         {view !== "map" && (
           <div className={`${view === "grid" ? "w-full" : "w-full lg:w-[420px] xl:w-[480px]"} flex-shrink-0 overflow-y-auto p-4 flex flex-col gap-3`}>
             {sorted.length === 0 && !loading ? (
@@ -394,7 +501,7 @@ export default function ListingsPage() {
                 <div className="flex justify-center mb-4"><Search size={40} className="opacity-25" /></div>
                 <p className="font-extrabold text-[#111827] mb-1">Aucun résultat trouvé</p>
                 <p className="text-sm mb-4">Essayez avec d&apos;autres mots-clés ou filtres</p>
-                <button onClick={() => { setSearchQuery(""); setActiveCat("all"); }} className="text-[#F26522] font-bold text-sm hover:underline">
+                <button onClick={resetFilters} className="text-[#F26522] font-bold text-sm hover:underline">
                   Effacer les filtres
                 </button>
               </div>
@@ -414,7 +521,7 @@ export default function ListingsPage() {
           </div>
         )}
 
-        {/* Carte — visible en desktop (split view) ou en mode carte complet */}
+        {/* Carte */}
         <div className={`${view === "map" ? "flex-1" : "hidden lg:flex flex-1"} flex-col overflow-hidden relative`}>
           <div className="flex-1 p-3" style={{ minHeight: 0 }}>
             <MapView
@@ -479,52 +586,51 @@ export default function ListingsPage() {
             </div>
 
             <div className="space-y-6">
+              {/* Age */}
               <div>
                 <p className="text-[12px] font-extrabold text-[#111827] uppercase tracking-wide mb-3">Tranche d&apos;âge</p>
                 <div className="flex flex-wrap gap-2">
-                  {["0–2 ans", "3–6 ans", "6–12 ans", "12–18 ans"].map((a) => (
-                    <button key={a} className="text-[12px] font-bold px-3 py-1.5 rounded-full border border-black/15 hover:border-[#F26522] hover:text-[#F26522] transition-all">{a}</button>
+                  {AGE_RANGES.map((a) => (
+                    <FilterChip
+                      key={a.label}
+                      label={a.label}
+                      active={activeAgeRange?.min === a.min && activeAgeRange?.max === a.max}
+                      onClick={() => setActiveAgeRange(
+                        activeAgeRange?.min === a.min ? null : { min: a.min, max: a.max }
+                      )}
+                    />
                   ))}
                 </div>
               </div>
 
+              {/* Ville */}
               <div>
-                <p className="text-[12px] font-extrabold text-[#111827] uppercase tracking-wide mb-3">Disponibilité</p>
-                <div className="flex flex-wrap gap-2">
-                  {["Ouvert maintenant", "Week-end", "Soirée"].map((d) => (
-                    <button key={d} className="text-[12px] font-bold px-3 py-1.5 rounded-full border border-black/15 hover:border-[#F26522] hover:text-[#F26522] transition-all">{d}</button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <p className="text-[12px] font-extrabold text-[#111827] uppercase tracking-wide mb-3">Ville</p>
+                <p className="text-[12px] font-extrabold text-[#111827] uppercase tracking-wide mb-3">Ville / Quartier</p>
                 <div className="flex flex-wrap gap-2">
                   {VILLES.map((v) => (
-                    <button
+                    <FilterChip
                       key={v}
-                      onClick={() => setActiveVille(v)}
-                      className={`text-[12px] font-bold px-3 py-1.5 rounded-full border transition-all
-                        ${activeVille === v ? "bg-[#0D2461] border-[#0D2461] text-white" : "border-black/15 hover:border-[#F26522] hover:text-[#F26522]"}
-                      `}
-                    >{v}</button>
+                      label={v}
+                      active={activeVille === v}
+                      onClick={() => setActiveVille(activeVille === v ? "all" : v)}
+                    />
                   ))}
                 </div>
               </div>
 
+              {/* Options */}
               <div>
                 <p className="text-[12px] font-extrabold text-[#111827] uppercase tracking-wide mb-3">Options</p>
                 <div className="flex flex-wrap gap-2">
-                  {["Vérifié ✓", "Premium", "Parking", "Bilingue", "Accès PMR"].map((o) => (
-                    <button key={o} className="text-[12px] font-bold px-3 py-1.5 rounded-full border border-black/15 hover:border-[#F26522] hover:text-[#F26522] transition-all">{o}</button>
-                  ))}
+                  <FilterChip label="Vérifié ✓" active={onlyVerified} onClick={() => setOnlyVerified(!onlyVerified)} />
+                  <FilterChip label="⭐ Premium" active={onlyPremium} onClick={() => setOnlyPremium(!onlyPremium)} />
                 </div>
               </div>
             </div>
 
             <div className="flex gap-3 mt-8">
               <button
-                onClick={() => { setActiveCat("all"); setActiveVille("all"); setSearchQuery(""); setFilterOpen(false); }}
+                onClick={resetFilters}
                 className="flex-1 border-2 border-black/15 text-[13px] font-bold py-3 rounded-xl hover:border-[#F26522] hover:text-[#F26522] transition-all"
               >
                 Réinitialiser
@@ -533,7 +639,7 @@ export default function ListingsPage() {
                 onClick={() => setFilterOpen(false)}
                 className="flex-1 bg-[#F26522] text-white text-[13px] font-bold py-3 rounded-xl hover:bg-[#FF8C4B] transition-all shadow-sm"
               >
-                Voir {sorted.length} résultats
+                Voir {sorted.length} résultat{sorted.length !== 1 ? "s" : ""}
               </button>
             </div>
           </div>
