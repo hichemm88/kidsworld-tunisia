@@ -8,7 +8,8 @@ const CATEGORIES = [
     name: "Santé",
     desc: "Pédiatres, dentistes, ophtalmos, orthophonistes",
     count: "180+",
-    color: "#16a34a",
+    color: "#10B981",
+    light: "#ECFDF5",
     wide: false,
   },
   {
@@ -18,33 +19,37 @@ const CATEGORIES = [
     desc: "Crèches, maternelles, cours de langue, soutien scolaire",
     count: "320+",
     color: "#7C3AED",
+    light: "#EDE9FE",
     wide: false,
   },
   {
     slug: "loisirs",
     Icon: Zap,
-    name: "Loisirs",
+    name: "Loisirs & Sorties",
     desc: "Parcs, espaces de jeux indoor, piscines, zoos, fermes pédagogiques",
     count: "210+",
-    color: "#2563EB",
+    color: "#0EA5E9",
+    light: "#E0F2FE",
     wide: true,
   },
   {
     slug: "ateliers",
     Icon: Palette,
     name: "Ateliers & Sport",
-    desc: "Sport, arts, musique, danse, robotique, cuisine",
+    desc: "Sport, arts, musique, danse, robotique, cuisine créative",
     count: "290+",
-    color: "#DC2626",
+    color: "#F43F5E",
+    light: "#FFF1F2",
     wide: false,
   },
   {
     slug: "fetes",
     Icon: Gift,
     name: "Fêtes & Événements",
-    desc: "Organisateurs d'anniversaires, animateurs, photographes",
+    desc: "Organisateurs d'anniversaires, animateurs, photographes enfants",
     count: "95+",
-    color: "#DB2777",
+    color: "#EC4899",
+    light: "#FDF2F8",
     wide: false,
   },
   {
@@ -53,24 +58,27 @@ const CATEGORIES = [
     name: "Shopping",
     desc: "Vêtements, jouets, puériculture, librairies jeunesse",
     count: "140+",
-    color: "#0891B2",
+    color: "#F59E0B",
+    light: "#FFFBEB",
     wide: false,
   },
 ];
 
 export default function CategoriesGrid() {
   return (
-    <section className="bg-white py-[64px]">
+    <section className="bg-white py-[72px]">
       <div className="max-w-[1140px] mx-auto px-5">
-        <p className="text-[11px] font-semibold tracking-widest uppercase text-[#F26522] mb-2">
-          Explorer par catégorie
-        </p>
-        <h2 className="text-[clamp(24px,3.2vw,36px)] font-extrabold text-[#0D2461] leading-tight mb-2">
-          Tout ce dont votre enfant a besoin
-        </h2>
-        <p className="text-[15px] text-gray-500 leading-relaxed max-w-[520px] mb-8">
-          De la santé aux loisirs, retrouvez les meilleurs établissements et services près de chez vous.
-        </p>
+        <div className="text-center mb-10">
+          <p className="text-[11px] font-bold tracking-widest uppercase text-[#F26522] mb-2">
+            Explorer par catégorie
+          </p>
+          <h2 className="text-[clamp(24px,3.2vw,36px)] font-extrabold text-[#0D2461] leading-tight mb-2">
+            Tout ce dont votre enfant a besoin
+          </h2>
+          <p className="text-[15px] text-gray-400 leading-relaxed max-w-[440px] mx-auto">
+            De la santé aux loisirs, les meilleurs établissements près de chez vous.
+          </p>
+        </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {CATEGORIES.map((cat) => {
@@ -79,25 +87,34 @@ export default function CategoriesGrid() {
               <Link
                 key={cat.slug}
                 href={`/listings?cat=${cat.slug}`}
-                className={`group bg-white border border-black/8 rounded-2xl p-5 hover:border-black/20 hover:shadow-lg transition-all duration-200 flex flex-col gap-3 ${
+                className={`group relative overflow-hidden rounded-3xl p-6 flex flex-col gap-4 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${
                   cat.wide ? "col-span-2 md:col-span-2" : ""
                 }`}
+                style={{ background: cat.light }}
               >
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: cat.color + "15" }}
-                >
-                  <Icon size={20} style={{ color: cat.color }} strokeWidth={1.75} />
+                {/* Decorative circle */}
+                <div className="absolute -right-6 -bottom-6 w-28 h-28 rounded-full opacity-15"
+                  style={{ background: cat.color }} />
+
+                {/* Icon */}
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm"
+                  style={{ background: cat.color }}>
+                  <Icon size={22} color="white" strokeWidth={2} />
                 </div>
 
-                <div className="flex-1">
-                  <p className="text-[16px] font-bold text-[#111827] mb-0.5">{cat.name}</p>
-                  <p className="text-[12px] text-gray-400 leading-relaxed">{cat.desc}</p>
+                <div className="flex-1 relative z-10">
+                  <p className="text-[17px] font-extrabold mb-1" style={{ color: cat.color }}>{cat.name}</p>
+                  <p className="text-[12px] text-gray-500 leading-relaxed">{cat.desc}</p>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-semibold text-gray-400">{cat.count} établissements</span>
-                  <ArrowRight size={14} className="text-gray-300 group-hover:text-[#F26522] group-hover:translate-x-0.5 transition-all" />
+                <div className="flex items-center justify-between relative z-10">
+                  <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-white/70"
+                    style={{ color: cat.color }}>
+                    {cat.count} établissements
+                  </span>
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center bg-white/70 group-hover:bg-white transition-colors">
+                    <ArrowRight size={13} style={{ color: cat.color }} className="group-hover:translate-x-0.5 transition-transform" />
+                  </div>
                 </div>
               </Link>
             );
