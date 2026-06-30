@@ -10,7 +10,6 @@ const CATEGORIES = [
     count: "180+",
     color: "#10B981",
     light: "#ECFDF5",
-    wide: false,
   },
   {
     slug: "education",
@@ -20,7 +19,6 @@ const CATEGORIES = [
     count: "320+",
     color: "#7C3AED",
     light: "#EDE9FE",
-    wide: false,
   },
   {
     slug: "loisirs",
@@ -30,7 +28,6 @@ const CATEGORIES = [
     count: "210+",
     color: "#0EA5E9",
     light: "#E0F2FE",
-    wide: true,
   },
   {
     slug: "ateliers",
@@ -40,7 +37,6 @@ const CATEGORIES = [
     count: "290+",
     color: "#F43F5E",
     light: "#FFF1F2",
-    wide: false,
   },
   {
     slug: "fetes",
@@ -50,7 +46,6 @@ const CATEGORIES = [
     count: "95+",
     color: "#EC4899",
     light: "#FDF2F8",
-    wide: false,
   },
   {
     slug: "shopping",
@@ -60,7 +55,6 @@ const CATEGORIES = [
     count: "140+",
     color: "#F59E0B",
     light: "#FFFBEB",
-    wide: false,
   },
 ];
 
@@ -87,9 +81,7 @@ export default function CategoriesGrid() {
               <Link
                 key={cat.slug}
                 href={`/listings?cat=${cat.slug}`}
-                className={`group relative overflow-hidden rounded-3xl p-6 flex flex-col gap-4 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${
-                  cat.wide ? "col-span-2 md:col-span-2" : ""
-                }`}
+                className="group relative overflow-hidden rounded-3xl p-6 flex flex-col gap-4 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
                 style={{ background: cat.light }}
               >
                 {/* Decorative circle */}
