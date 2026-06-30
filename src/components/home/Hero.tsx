@@ -1,249 +1,194 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Search, MapPin, ChevronDown, ArrowRight,
-  Heart, BookOpen, Zap, Palette, Gift, ShoppingBag,
-} from "lucide-react";
+import { Search, MapPin, Star, Heart, BookOpen, Zap, Palette, Gift, ShoppingBag, Sparkles } from "lucide-react";
 
 const QUICK_FILTERS = [
-  { label: "Pédiatres", cat: "sante", Icon: Heart },
-  { label: "Parcs de jeu", cat: "loisirs", Icon: Zap },
-  { label: "Cours de langue", cat: "education", Icon: BookOpen },
-  { label: "Anniversaires", cat: "fetes", Icon: Gift },
-  { label: "Sport & Ateliers", cat: "ateliers", Icon: Palette },
-  { label: "Shopping enfant", cat: "shopping", Icon: ShoppingBag },
+  { label: "Parcs & Jeux", slug: "loisirs", color: "#0EA5E9", bg: "#E0F2FE" },
+  { label: "Crèches",      slug: "education", color: "#7C3AED", bg: "#EDE9FE" },
+  { label: "Sport & Arts", slug: "ateliers",  color: "#F43F5E", bg: "#FFF1F2" },
+  { label: "Anniversaires",slug: "fetes",     color: "#EC4899", bg: "#FDF2F8" },
+  { label: "Pédiatres",    slug: "sante",     color: "#10B981", bg: "#ECFDF5" },
+  { label: "Shopping",     slug: "shopping",  color: "#F59E0B", bg: "#FFFBEB" },
 ];
 
-const VILLES = ["Tunis", "La Marsa", "Ariana", "Ben Arous", "La Soukra", "Ennasr", "El Menzah"];
+const VILLES = ["Tunis", "La Marsa", "Ariana", "Sfax", "Sousse", "Nabeul", "Bizerte", "Hammamet", "Ben Arous", "Manouba"];
 
-const POPULAR_SEARCHES = [
-  "Pédiatre les berges du lac",
-  "Cours de natation enfants",
-  "Anniversaire trampoline",
-  "École maternelle bilingue",
-  "Orthophoniste Tunis",
-  "Activités été enfants",
+const FLOATING_BADGES = [
+  { Icon: Star,        label: "1 200+ avis",     color: "#F59E0B", bg: "#FFFBEB",  pos: "top-[18%] right-[6%]",  delay: "0s" },
+  { Icon: MapPin,      label: "48 villes",        color: "#F43F5E", bg: "#FFF1F2",  pos: "bottom-[28%] right-[4%]", delay: "0.4s" },
+  { Icon: Sparkles,    label: "Vérifié & fiable", color: "#7C3AED", bg: "#EDE9FE",  pos: "top-[38%] left-[2%]",   delay: "0.8s" },
 ];
-
-function getSmartSuggestions(q: string): string[] {
-  if (!q || q.length < 2) return [];
-  const lower = q.toLowerCase();
-  const all = [
-    "Pédiatre", "Dentiste enfant", "Orthophoniste", "Psychologue enfant",
-    "Cours de natation", "Cours d'anglais", "Cours de musique", "Arts plastiques",
-    "Trampoline", "Accrobranche", "Mini golf", "Bowling",
-    "Anniversaire décor", "Salle des fêtes", "Animation anniversaire",
-    "École maternelle", "École primaire", "Jardin d'enfant",
-    "Baby gym", "Yoga kids", "Judo enfant", "Football enfant",
-    "Puériculture", "Poussettes", "Jouets éducatifs", "Livres enfant",
-  ];
-  return all.filter((s) => s.toLowerCase().startsWith(lower) || s.toLowerCase().includes(lower)).slice(0, 5);
-}
 
 export default function Hero() {
   const router = useRouter();
-  const [query, setQuery] = useState("");
-  const [ville, setVille] = useState("Tunis");
-  const [showVilles, setShowVilles] = useState(false);
+  const [search, setSearch] = useState("");
+  const [ville, setVille] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [focused, setFocused] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const villeRef = useRef<HTMLDivElement>(null);
+  const [showSug, setShowSug] = useState(false);
+  const sugRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const t = setTimeout(() => setSuggestions(getSmartSuggestions(query)), 200);
-    return () => clearTimeout(t);
-  }, [query]);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (villeRef.current && !villeRef.current.contains(e.target as Node)) setShowVilles(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  const handleSearch = (q?: string) => {
-    const finalQuery = q ?? query;
-    if (!finalQuery.trim() && ville === "Tunis") { router.push("/listings"); return; }
+  const handleSearch = (q?: string, v?: string) => {
+    const finalQ = q ?? search;
+    const finalV = v ?? ville;
     const params = new URLSearchParams();
-    if (finalQuery.trim()) params.set("q", finalQuery.trim());
-    if (ville !== "Tunis") params.set("ville", ville);
+    if (finalQ.trim()) params.set("q", finalQ.trim());
+    if (finalV.trim()) params.set("ville", finalV.trim());
     router.push(`/listings?${params.toString()}`);
   };
 
+  const POPULAR = ["Crèche", "Cours de natation", "Pédiatre", "Anniversaire", "Parc indoor", "Soutien scolaire"];
+  const getSmartSuggestions = (q: string) => {
+    if (!q.trim()) return [];
+    return POPULAR.filter(s => s.toLowerCase().includes(q.toLowerCase())).slice(0, 4);
+  };
+
+  useEffect(() => {
+    setSuggestions(getSmartSuggestions(search));
+    setShowSug(search.length > 1);
+  }, [search]);
+
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (sugRef.current && !sugRef.current.contains(e.target as Node)) setShowSug(false);
+    };
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, []);
+
   return (
-    <section className="bg-white border-b border-black/6">
-      <div className="max-w-[1140px] mx-auto px-5 pt-16 pb-14 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+    <section className="relative overflow-hidden" style={{ background: "linear-gradient(150deg, #071640 0%, #0D2461 55%, #16306E 100%)" }}>
 
-        {/* Left */}
-        <div>
-          <p className="text-[12px] font-semibold text-[#F26522] tracking-widest uppercase mb-4">
-            L&apos;annuaire N°1 des parents tunisiens
-          </p>
+      {/* Decorative color blobs */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute w-[420px] h-[420px] rounded-full opacity-[0.12] blur-3xl"
+          style={{ background: "#F26522", top: "-100px", right: "-60px" }} />
+        <div className="absolute w-[300px] h-[300px] rounded-full opacity-[0.1] blur-3xl"
+          style={{ background: "#06B6D4", bottom: "-60px", left: "5%" }} />
+        <div className="absolute w-[200px] h-[200px] rounded-full opacity-[0.08] blur-2xl"
+          style={{ background: "#7C3AED", top: "30%", left: "25%" }} />
+        {/* Colorful dots */}
+        {[
+          { color: "#F26522", size: 10, top: "15%", left: "12%" },
+          { color: "#0EA5E9", size: 7, top: "65%", left: "42%" },
+          { color: "#10B981", size: 12, top: "75%", right: "18%" },
+          { color: "#EC4899", size: 8, top: "20%", right: "30%" },
+          { color: "#F59E0B", size: 6, top: "50%", left: "8%" },
+        ].map((d, i) => (
+          <div key={i} className="absolute rounded-full opacity-40"
+            style={{ width: d.size, height: d.size, background: d.color, top: d.top, left: (d as any).left, right: (d as any).right }} />
+        ))}
+      </div>
 
-          <h1 className="text-[clamp(34px,4.2vw,54px)] font-extrabold text-[#0D2461] leading-[1.1] tracking-tight mb-4">
-            Tout ce qu&apos;il faut<br />
-            pour votre enfant,{" "}
-            <span className="text-[#F26522]">près de vous.</span>
+      {/* Floating badges */}
+      {FLOATING_BADGES.map((b, i) => (
+        <div key={i}
+          className="absolute hidden lg:flex items-center gap-2 px-3 py-2 rounded-2xl shadow-lg"
+          style={{
+            background: b.bg, color: b.color,
+            ...(b.pos.includes("top-[18%] right") ? { top: "18%", right: "6%" } :
+                b.pos.includes("bottom-[28%] right") ? { bottom: "28%", right: "4%" } :
+                { top: "38%", left: "2%" }),
+            animation: `float 3s ease-in-out ${b.delay} infinite alternate`,
+          }}>
+          <b.Icon size={13} />
+          <span className="text-[11px] font-bold whitespace-nowrap">{b.label}</span>
+        </div>
+      ))}
+
+      <style>{`
+        @keyframes float { from { transform: translateY(0px); } to { transform: translateY(-8px); } }
+      `}</style>
+
+      <div className="max-w-[1140px] mx-auto px-5 py-[80px] md:py-[100px] relative z-10">
+        <div className="max-w-[680px] mx-auto text-center">
+
+          {/* Eyebrow */}
+          <div className="inline-flex items-center gap-2 bg-white/10 border border-white/15 text-white/80 text-[11.5px] font-semibold px-4 py-1.5 rounded-full mb-7 backdrop-blur-sm">
+            <Sparkles size={12} className="text-[#F59E0B]" />
+            Le guide des familles en Tunisie
+          </div>
+
+          {/* Heading */}
+          <h1 className="text-[clamp(32px,5.5vw,60px)] font-extrabold text-white leading-[1.1] tracking-tight mb-4">
+            Tout pour vos{" "}
+            <span className="relative inline-block">
+              <span style={{ color: "#F26522" }}>enfants</span>
+              <span className="absolute -bottom-1 left-0 right-0 h-[3px] rounded-full opacity-50" style={{ background: "#F26522" }} />
+            </span>
+            {" "}près de chez vous
           </h1>
 
-          <p className="text-[16px] text-gray-500 leading-relaxed mb-8 max-w-[460px]">
-            Pédiatres, écoles, activités, fêtes d&apos;anniversaire… Trouvez et comparez les meilleurs services pour vos enfants.
+          <p className="text-[15px] text-white/60 leading-relaxed mb-10 max-w-[500px] mx-auto">
+            Crèches, loisirs, santé, ateliers — trouvez les meilleurs établissements pour vos enfants en quelques secondes.
           </p>
 
-          {/* Search */}
-          <div className="relative mb-5">
-            <div className={`bg-white rounded-2xl flex items-center border transition-all duration-200 ${
-              focused ? "border-[#F26522] shadow-[0_0_0_3px_rgba(242,101,34,0.1)]" : "border-black/12 shadow-sm"
-            }`}>
-              <div className="pl-4 pr-1">
-                <Search size={17} className={`transition-colors ${focused ? "text-[#F26522]" : "text-gray-400"}`} />
+          {/* Search box */}
+          <div className="bg-white rounded-2xl p-2 shadow-[0_20px_60px_rgba(0,0,0,0.3)] flex flex-col md:flex-row gap-2">
+            <div className="flex-1 relative" ref={sugRef}>
+              <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                <Search size={16} className="text-gray-400" />
               </div>
               <input
-                ref={inputRef}
                 type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onFocus={() => { setFocused(true); setShowSuggestions(true); }}
-                onBlur={() => { setFocused(false); setTimeout(() => setShowSuggestions(false), 200); }}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                placeholder="Pédiatre, cours de natation, anniversaire..."
-                className="flex-1 border-none outline-none text-[15px] text-[#111827] bg-transparent py-3.5 px-2.5 min-w-0"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                onFocus={() => search.length > 1 && setShowSug(true)}
+                onKeyDown={e => e.key === "Enter" && handleSearch()}
+                placeholder="Que cherchez-vous ? (crèche, sport, pédiatre...)"
+                className="w-full pl-10 pr-4 py-3 text-[14px] text-gray-800 placeholder-gray-400 outline-none rounded-xl bg-gray-50 focus:bg-white transition-colors"
               />
-              <div ref={villeRef} className="relative flex-shrink-0 hidden sm:block">
-                <div className="w-px h-7 bg-black/10 mr-2" />
-                <button type="button" onClick={() => setShowVilles(!showVilles)}
-                  className="flex items-center gap-1.5 text-[13px] font-semibold text-gray-500 pr-2 hover:text-[#0D2461] transition-colors">
-                  <MapPin size={13} className="text-[#F26522]" />
-                  <span>{ville}</span>
-                  <ChevronDown size={11} className={`transition-transform ${showVilles ? "rotate-180" : ""}`} />
-                </button>
-                {showVilles && (
-                  <div className="absolute top-full right-0 mt-2 w-44 bg-white rounded-xl shadow-xl border border-black/10 py-1 z-50">
-                    {VILLES.map((v) => (
-                      <button key={v} onClick={() => { setVille(v); setShowVilles(false); }}
-                        className={`w-full text-left px-3 py-2 text-[13px] font-semibold transition-colors ${
-                          ville === v ? "text-[#F26522] bg-orange-50" : "text-gray-600 hover:bg-gray-50"
-                        }`}>
-                        {ville === v && "✓ "}{v}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <button type="button" onClick={() => handleSearch()}
-                className="bg-[#F26522] hover:bg-[#e05a1a] active:scale-95 text-white rounded-[13px] m-1.5 px-3 sm:px-5 py-2.5 text-[13px] sm:text-[14px] font-bold transition-all whitespace-nowrap">
-                <span className="hidden sm:inline">Rechercher</span>
-                <Search size={16} className="sm:hidden" />
-              </button>
+              {showSug && suggestions.length > 0 && (
+                <div className="absolute left-0 right-0 top-full mt-1 bg-white rounded-xl shadow-xl border border-black/8 z-50 overflow-hidden">
+                  {suggestions.map(s => (
+                    <button key={s} onClick={() => { setSearch(s); setShowSug(false); handleSearch(s); }}
+                      className="w-full text-left px-4 py-2.5 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2">
+                      <Search size={12} className="text-gray-400" /> {s}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
-            {showSuggestions && suggestions.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-1.5 bg-white rounded-xl shadow-xl border border-black/10 overflow-hidden z-50">
-                {suggestions.map((s) => (
-                  <button key={s} onMouseDown={() => { setQuery(s); handleSearch(s); }}
-                    className="w-full text-left px-4 py-2.5 text-[13px] text-gray-700 hover:bg-orange-50 hover:text-[#F26522] transition-colors flex items-center gap-2">
-                    <Search size={12} className="text-gray-300" />
-                    {s}
-                    <ArrowRight size={11} className="ml-auto text-gray-300" />
-                  </button>
-                ))}
+            <div className="w-px bg-gray-200 hidden md:block self-stretch" />
+
+            <div className="flex-shrink-0 md:w-44">
+              <div className="relative">
+                <MapPin size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <select value={ville} onChange={e => setVille(e.target.value)}
+                  className="w-full pl-8 pr-3 py-3 text-[13px] text-gray-700 outline-none rounded-xl bg-gray-50 focus:bg-white transition-colors appearance-none cursor-pointer">
+                  <option value="">Toute la Tunisie</option>
+                  {VILLES.map(v => <option key={v} value={v}>{v}</option>)}
+                </select>
               </div>
-            )}
-            {showSuggestions && !query && (
-              <div className="absolute top-full left-0 right-0 mt-1.5 bg-white rounded-xl shadow-xl border border-black/10 overflow-hidden z-50">
-                <div className="px-4 py-2 border-b border-black/5">
-                  <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Recherches populaires</span>
-                </div>
-                {POPULAR_SEARCHES.map((s) => (
-                  <button key={s} onMouseDown={() => { setQuery(s); handleSearch(s); }}
-                    className="w-full text-left px-4 py-2.5 text-[13px] text-gray-600 hover:bg-orange-50 hover:text-[#F26522] transition-colors flex items-center gap-2">
-                    <Search size={12} className="text-gray-300" />
-                    {s}
-                  </button>
-                ))}
-              </div>
-            )}
+            </div>
+
+            <button onClick={() => handleSearch()}
+              className="flex items-center justify-center gap-2 bg-[#F26522] hover:bg-[#e05a1a] text-white font-bold text-[14px] px-6 py-3 rounded-xl transition-all shadow-[0_4px_16px_rgba(242,101,34,0.4)] whitespace-nowrap">
+              <Search size={15} /> Rechercher
+            </button>
           </div>
 
-          {/* Quick filter pills */}
-          <div className="flex flex-wrap gap-2 mb-8">
-            {QUICK_FILTERS.map(({ label, cat, Icon }) => (
-              <button key={cat} onClick={() => router.push(`/listings?cat=${cat}`)}
-                className="inline-flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-full border border-black/10 bg-white text-gray-600 hover:border-[#F26522]/40 hover:text-[#F26522] hover:bg-orange-50 transition-all">
-                <Icon size={11} />
-                {label}
+          {/* Quick filters */}
+          <div className="flex flex-wrap justify-center gap-2 mt-6">
+            {QUICK_FILTERS.map(f => (
+              <button key={f.slug} onClick={() => router.push(`/listings?cat=${f.slug}`)}
+                className="flex items-center gap-1.5 text-[12px] font-bold px-3.5 py-1.5 rounded-full transition-all hover:scale-105 active:scale-95"
+                style={{ background: f.bg, color: f.color }}>
+                {f.label}
               </button>
             ))}
           </div>
 
-          {/* Trust signals */}
-          <div className="flex items-center gap-6 flex-wrap pt-4 border-t border-black/6">
-            {[
-              { value: "2 400+", label: "établissements" },
-              { value: "18 000+", label: "familles" },
-              { value: "4.8 ★", label: "note moyenne" },
-            ].map((s) => (
-              <div key={s.label}>
-                <p className="text-[#0D2461] font-extrabold text-[18px] leading-none">{s.value}</p>
-                <p className="text-gray-400 text-[11px] mt-0.5">{s.label}</p>
-              </div>
-            ))}
-          </div>
         </div>
+      </div>
 
-        {/* Right — phone mockup */}
-        <div className="hidden lg:flex justify-center items-center">
-          <div className="relative">
-            <div className="absolute inset-0 bg-[#0D2461] rounded-[40px] blur-3xl opacity-8 scale-90" />
-            <div className="relative w-[260px] bg-[#1a1a2e] rounded-[36px] p-3 shadow-[0_24px_60px_rgba(13,36,97,0.15)] border border-white/10">
-              <div className="w-20 h-5 bg-[#111] rounded-b-xl mx-auto mb-1" />
-              <div className="rounded-[26px] overflow-hidden bg-[#F7F6F2]">
-                <div className="bg-[#0D2461] px-3 py-2.5 flex items-center gap-2">
-                  <span className="text-[12px] font-extrabold tracking-widest text-white">KIDSWORLD</span>
-                  <div className="flex-1 bg-white/15 rounded-lg px-2 py-1 text-[10px] text-white/50 flex items-center gap-1">
-                    <Search size={8} className="text-white/50" />
-                    Rechercher...
-                  </div>
-                </div>
-                <div className="p-2.5 flex flex-col gap-2">
-                  {[
-                    { name: "Dr. Ben Ali Sana", loc: "Les Berges du Lac", stars: "4.9", status: "Ouvert", ok: true, prem: true },
-                    { name: "JumPark Tunis", loc: "La Marsa", stars: "4.8", status: "Ouvert", ok: true, prem: true },
-                    { name: "Kids English Club", loc: "Manar 2", stars: "4.7", status: "Fermé", ok: false, prem: false },
-                  ].map((item, i) => (
-                    <div key={i} className="bg-white rounded-xl border border-black/8 flex overflow-hidden">
-                      <div className={`w-12 flex-shrink-0 flex items-center justify-center ${item.prem ? "bg-amber-50" : "bg-gray-50"}`}>
-                        <div className="w-5 h-5 rounded-full bg-[#0D2461]/10 flex items-center justify-center">
-                          <Search size={9} className="text-[#0D2461]/40" />
-                        </div>
-                      </div>
-                      <div className="p-2 flex-1 min-w-0">
-                        <p className="text-[10px] font-bold text-[#111827] truncate">{item.name}</p>
-                        <p className="text-[8px] text-gray-400 mb-1 truncate">{item.loc}</p>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[9px] text-amber-500 font-bold">★ {item.stars}</span>
-                          <span className={`text-[8px] font-semibold ${item.ok ? "text-green-600" : "text-red-500"}`}>{item.status}</span>
-                          {item.prem && <span className="text-[7px] font-bold bg-amber-100 text-amber-700 px-1 rounded-full">Premium</span>}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="mx-2.5 mb-2.5 h-[60px] rounded-xl bg-[#E8EDF5] flex items-center justify-center border border-[#cde] relative overflow-hidden">
-                  <span className="text-[9px] text-gray-400">Carte interactive</span>
-                  {[{ x: 30, y: 35, c: "#F26522" }, { x: 62, y: 55, c: "#0D2461" }, { x: 78, y: 22, c: "#F5C518" }].map((p, i) => (
-                    <div key={i} className="absolute w-2.5 h-2.5 rounded-full border-2 border-white shadow" style={{ left: `${p.x}%`, top: `${p.y}%`, background: p.c }} />
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Bottom wave */}
+      <div className="relative -mb-1">
+        <svg viewBox="0 0 1440 48" preserveAspectRatio="none" className="w-full block" style={{ height: 48 }}>
+          <path d="M0,48 C360,0 1080,0 1440,48 L1440,48 L0,48 Z" fill="white" />
+        </svg>
       </div>
     </section>
   );
