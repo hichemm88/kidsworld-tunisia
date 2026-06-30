@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Menu, X, User, LayoutDashboard, Heart, LogOut, Crown, Plus,
   Zap, BookOpen, Palette, Gift, ShoppingBag, Search } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -44,10 +45,7 @@ export default function Navbar() {
 
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 flex-shrink-0 mr-2">
-          <div className="w-9 h-9 rounded-2xl flex items-center justify-center text-white font-extrabold text-[13px] italic"
-            style={{ background: "linear-gradient(135deg, #0D2461 0%, #F26522 100%)" }}>
-            K<span className="text-white/80">W</span>
-          </div>
+          <Image src="/logo.svg" alt="KidsWorld Tunisia" width={38} height={38} className="rounded-xl" />
           <div className="flex flex-col">
             <span className="font-bebas text-[19px] tracking-[2px] text-[#0D2461] leading-none">KidsWorld</span>
             <span className="text-[8px] text-gray-400 tracking-wider uppercase">Tunisie</span>
