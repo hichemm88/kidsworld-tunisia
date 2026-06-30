@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="500" height="500">
+  <defs>
+    <clipPath id="rounded">
+      <rect width="500" height="500" rx="60" ry="60"/>
+    </clipPath>
+  </defs>
+  <!-- Orange background -->
+  <rect width="500" height="500" rx="60" ry="60" fill="#F26522"/>
+  <!-- White kw monogram (handwritten style) -->
+  <g clip-path="url(#rounded)" fill="white" stroke="none">
+    <!-- Circle/dot on top of k -->
+    <circle cx="165" cy="110" r="42" fill="white"/>
+    <circle cx="165" cy="110" r="22" fill="#F26522"/>
+    <!-- Letter k stem -->
+    <path d="M110 140 Q108 145 110 150 L125 310 Q127 322 140 322 L170 322 Q182 322 183 310 L168 150 Q170 145 165 140 Z" fill="white"/>
+    <!-- Letter k upper arm -->
+    <path d="M162 220 Q170 215 185 205 L255 155 Q268 146 278 148 L295 148 Q310 148 300 162 L235 210 Q225 217 228 225 L300 310 Q310 325 295 328 L275 328 Q262 328 254 318 L192 248 Q180 235 162 245 Z" fill="white"/>
+    <!-- Letter w left stroke -->
+    <path d="M248 190 Q255 188 262 195 L285 280 L308 220 Q315 205 328 205 Q341 205 347 220 L370 280 L392 195 Q398 185 408 186 L418 190 Q428 196 422 208 L385 325 Q378 340 363 338 Q348 336 343 320 L328 275 L313 320 Q308 336 292 338 Q277 340 270 325 L232 208 Q226 196 236 190 Z" fill="white"/>
+  </g>
+  <!-- KIDSWORLD text -->
+  <text x="250" y="400" font-family="Arial Rounded MT Bold, Arial, sans-serif" font-size="58" font-weight="900" fill="white" text-anchor="middle" letter-spacing="5">KIDSWORLD</text>
+  <!-- Tagline -->
+  <text x="250" y="445" font-family="Arial, sans-serif" font-size="22" fill="white" text-anchor="middle" letter-spacing="1" font-style="italic">Le monde appartient aux enfants</text>
+</svg>
