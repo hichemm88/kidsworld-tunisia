@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Facebook, Instagram, Youtube, Mail, Phone, MapPin } from "lucide-react";
 
 const LINKS = {
@@ -31,9 +32,7 @@ export default function Footer() {
           {/* Brand */}
           <div className="md:col-span-1">
             <Link href="/" className="flex items-center gap-2.5 mb-4">
-              <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-sm font-extrabold text-[#0D2461] italic">
-                K<span className="text-[#F26522]">W</span>
-              </div>
+              <Image src="/logo.svg" alt="KidsWorld Tunisia" width={40} height={40} className="rounded-xl" />
               <div>
                 <p className="font-bebas text-[20px] tracking-[2px] leading-none">KidsWorld</p>
                 <p className="text-[10px] text-white/40 tracking-wider">Tunisia</p>
